@@ -1,42 +1,131 @@
 import asyncio
 import base64
+import logging
 import os
-
 import sys
+import time
+from datetime import timedelta, datetime
 
 import aiohttp
+import durationpy
+import reflex as rx
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
+from sqlalchemy.sql import text
 
-async def get_popular_images():
-    async with aiohttp.ClientSession() as session:
-        async with session.get("https://hub.docker.com/api/search/v3/catalog/search?from=0&size=50&query=&type=image&source=store&official=true&open_source=true", raise_for_status=True) as response:
-            data = await response.json()
-            for result in data["results"]:
-                image_name = result["id"]
-                async with session.get(
-                    f"https://hub.docker.com/v2/repositories/{image_name}/tags?page_size=25&ordering=last_updated",
-                    raise_for_status=True) as response_inner:
-                        tags = await response_inner.json()
-                        # iterate over "results", each object should have a "content_type" == "image" field, the version tag is stored in "name" (e.g. "latest")
+import database_update.dockerhub_scraper as dockerhub_scraper
+from docker_tag_monitor.models import ImageToScrape, ImageUpdate
 
-async def get_digest():
-    image_name = ImageName.parse("busybox:1.30.1")
-    async with DockerRegistryClientAsync() as drca:
-        username = os.getenv("DOCKER_USERNAME")
-        password = os.getenv("DOCKER_PASSWORD")
-        await drca.add_credentials(credentials=base64.b64encode(f"{username}:{password}".encode("ascii")).decode("ascii"), endpoint="https://index.docker.io/")
+logger = logging.getLogger("DatabaseUpdater")
 
-        for i in range(100):
-            result = await drca.head_manifest(image_name)
-            # if result.result is True, see result.digest (str)
-            print(result.client_response.headers["ratelimit-limit"])
-            print(result.client_response.headers["ratelimit-remaining"])
-            # Note: the values for ratelimit-remaining DON'T seem to decrease ...
-            print(str(i))
-        i = 2
+
+async def update_popular_images_to_scrape():
+    popular_images = await dockerhub_scraper.get_popular_images()
+    if not popular_images:
+        return
+
+    images_to_scrape = await dockerhub_scraper.get_images_with_tags_to_scrape(popular_images)
+    if not images_to_scrape:
+        return
+
+    with rx.session() as session:
+        for image_to_scrape in images_to_scrape:
+            query = ImageToScrape.select().where(ImageToScrape.endpoint == image_to_scrape.endpoint,
+                                                 ImageToScrape.image == image_to_scrape.image,
+                                                 ImageToScrape.tag == image_to_scrape.tag)
+            database_object = session.exec(query).first()
+            if database_object is None:
+                try:
+                    session.add(image_to_scrape)
+                    session.commit()
+                except Exception as e:
+                    logging.warning(f"Failed to add image to scrape: {e}")
+
+
+async def refresh_digests():
+    """
+    Iterates over all ImageToScrape entries and refreshes the digest for each one.
+    """
+    logger.info("Refreshing digests for all images")
+    # TODO: integrate BackgroundJobExecution
+    async with DockerRegistryClientAsync() as registry_client:
+        await configure_dockerhub_credentials_if_provided(registry_client)
+        with rx.session() as session:
+            query = ImageToScrape.select()
+            for image_to_scrape in session.exec(query):
+                image_name = ImageName.parse(
+                    f"{image_to_scrape.endpoint}/{image_to_scrape.image}:{image_to_scrape.tag}")
+
+                try:
+                    result = await registry_client.head_manifest(image_name)
+                except aiohttp.ClientError as e:
+                    # TODO: this needs further investigation - e.g. is this where rate limits would come into play?
+                    logging.warning(f"Failed to refresh digest for image '{image_name}': {e}")
+                    continue
+
+                digest_was_found_in_registry = result.result
+                if digest_was_found_in_registry is True:
+                    # Add an entry in the database, if the digest of the most recent one is different (or missing)
+                    query = ImageUpdate.select().where(ImageUpdate.image_id == image_to_scrape.id).order_by(
+                        ImageUpdate.scraped_at.desc())
+                    last_update = session.exec(query).first()
+                    if last_update is None or last_update.digest != result.digest:
+                        image_update = ImageUpdate(scraped_at=datetime.now(), image_id=image_to_scrape.id,
+                                                   digest=result.digest)
+                        try:
+                            session.add(image_update)
+                            session.commit()
+                        except Exception as e:
+                            logging.warning(f"Failed to add image scrape update for {image_update}: {e}")
+                else:
+                    logger.warning(f"Failed to refresh digest for image '{image_name}', image/tag not found "
+                                   "in registry!")
+
+    logger.info("Digest refresh completed")  # TODO improve logging
+
+
+async def configure_dockerhub_credentials_if_provided(registry_client: DockerRegistryClientAsync):
+    username = os.getenv("DOCKERHUB_USERNAME")
+    password = os.getenv("DOCKERHUB_PASSWORD")
+    if username and password:
+        b64_credentials = base64.b64encode(f"{username}:{password}".encode("ascii")).decode("ascii")
+        await registry_client.add_credentials(credentials=b64_credentials, endpoint="https://index.docker.io/")
+
+
+def verify_database_connection():
+    with rx.session() as session:
+        session.exec(text("SELECT 1"))  # raises in case the connection to the DB cannot be established
+
+
+async def main():
+    verify_database_connection()
+    last_image_refresh_timestamp = -999999999
+    last_digest_refresh_timestamp = -999999999
+
+    image_refresh_interval = durationpy.from_str(os.getenv("IMAGE_REFRESH_INTERVAL", "1d"))
+    digest_refresh_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_INTERVAL", "1h"))
+
+    while True:
+        now = time.monotonic()
+        if (now - last_image_refresh_timestamp) > image_refresh_interval.total_seconds():
+            await update_popular_images_to_scrape()
+            last_image_refresh_timestamp = time.monotonic()
+
+        now = time.monotonic()
+        if (now - last_digest_refresh_timestamp) > digest_refresh_interval.total_seconds():
+            await refresh_digests()
+            last_digest_refresh_timestamp = time.monotonic()
+
+            digest_refresh_duration = timedelta(seconds=time.monotonic() - now)
+            if digest_refresh_duration > digest_refresh_interval:
+                logging.warning(f"Digest refresh took longer than the interval - some optimizations are required "
+                                f"(duration: {digest_refresh_duration}")
+        else:
+            await asyncio.sleep(10)
+
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(get_popular_images())
+    loop.run_until_complete(main())
