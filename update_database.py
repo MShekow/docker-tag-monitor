@@ -124,8 +124,11 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("SIGINT detected, exiting...")
