@@ -29,8 +29,8 @@ def menu_item(text: str, url: str) -> rx.Component:
             rx.match(
                 text,
                 ("Overview", menu_item_icon("home")),
-                ("Classes", menu_item_icon("table-2")),
-                ("About", menu_item_icon("book-open")),
+                ("Image details", menu_item_icon("table-2")),
+                ("About", menu_item_icon("book-open")),  # TODO fix these entries
                 ("Profile", menu_item_icon("user")),
                 ("Predict", menu_item_icon("home")),
                 ("Settings", menu_item_icon("settings")),
@@ -109,7 +109,7 @@ def menu_button() -> rx.Component:
     # The ordered page routes.
     ordered_page_routes = [
         "/",
-        "/table",
+        "/details/[...image_name]",
         "/about",
         "/profile",
         "/predict",

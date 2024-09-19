@@ -1,5 +1,6 @@
 import reflex as rx
 
+from .utils import clickable_image_details_link
 from ..state import SearchState
 
 
@@ -39,13 +40,17 @@ def search_bar() -> rx.Component:
                     role="alert",
                 )),
             rx.cond(SearchState.unknown_image, rx.callout(
-                "No images found. Click here to monitor this image/tag",  # TODO clickable link
+                rx.text("No images found. Click ", rx.link("here", href=f"/details/{SearchState.search_string}"),
+                        " to monitor this image/tag"),
                 icon="info",
                 color_scheme="green",
                 role="alert",
             )),
             rx.cond(SearchState.search_results,
-                    # TODO: clickable links
-                    rx.foreach(SearchState.search_results, lambda item: rx.text(f"{item.image}:{item.tag}"))),
+                    rx.vstack(
+                        rx.foreach(SearchState.search_results,
+                                   lambda item: clickable_image_details_link(f"{item.endpoint}/{item.image}:{item.tag}",
+                                                                             item))),
+                    ),
             size="1"),
     )

@@ -16,7 +16,7 @@ def index() -> rx.Component:
             "Docker Tag Monitor provides insights into the update frequency of Docker/OCI image tags. "
             "It scrapes a few popular images by default, but allows you to add more tags."),
         search_bar(),
-        overview_table(),
+        overview_table(),  # TODO: show another column with the tag updates, sorted by the most active ones
         spacing="8",
         width="100%",
     )

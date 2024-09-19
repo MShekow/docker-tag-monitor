@@ -1,10 +1,11 @@
 import re
+from typing import Optional
 
 import reflex as rx
-from docker_registry_client_async import ImageName
+from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlmodel import select, func, col
 
-from .models import ImageToScrape
+from .models import ImageToScrape, ImageUpdate
 
 
 class OverviewTableState(rx.State):
@@ -12,7 +13,7 @@ class OverviewTableState(rx.State):
 
     total_items: int = 0
     offset: int = 0
-    items_per_page: int = 12  # Number of rows per page
+    items_per_page: int = 12
 
     @rx.var(cache=True)
     def page_number(self) -> int:
@@ -78,6 +79,138 @@ def validate_image_name(image_name: ImageName):
             raise ValueError(f"Invalid image format: {image_name.image}")
 
 
+async def image_exists_in_registry(image_name: ImageName) -> bool:
+    async with DockerRegistryClientAsync() as registry_client:
+        try:
+            result = await registry_client.head_manifest(image_name)
+            return result.result
+        except Exception as e:
+            return False
+
+class ImageDetailsState(rx.State):
+    error: bool = False
+    loading: bool = True
+    not_found: bool = False
+    non_existent_image: bool = False
+    image_to_scrape: Optional[ImageToScrape] = None
+
+    items: list[ImageUpdate] = []
+
+    total_items: int = 0
+    offset: int = 0
+    items_per_page: int = 12
+
+    @rx.var(cache=True)
+    def page_number(self) -> int:
+        return (
+                (self.offset // self.items_per_page)
+                + 1
+                + (1 if self.offset % self.items_per_page else 0)
+        )
+
+    @rx.var(cache=True)
+    def total_pages(self) -> int:
+        return (self.total_items // self.items_per_page) + (
+            1 if self.total_items % self.items_per_page else 0
+        )
+
+    def prev_page(self):
+        if self.page_number > 1:
+            self.offset -= self.items_per_page
+            self.load_digest_table_data_for_page()
+
+    def next_page(self):
+        if self.page_number < self.total_pages:
+            self.offset += self.items_per_page
+            self.load_digest_table_data_for_page()
+
+    def first_page(self):
+        self.offset = 0
+        self.load_digest_table_data_for_page()
+
+    def last_page(self):
+        self.offset = (self.total_pages - 1) * self.items_per_page
+        self.load_digest_table_data_for_page()
+
+    def load_digest_table_data_for_page(self):
+        with rx.session() as session:
+            select_query = ImageUpdate.select().where(ImageUpdate.image_id == self.image_to_scrape.id).offset(
+                self.offset).limit(self.items_per_page)
+            self.items = session.exec(select_query).all()
+
+    async def on_page_load(self):
+        # Reset vars to default
+        self.error = False
+        self.loading = True
+        self.not_found = False
+        self.non_existent_image = False
+        self.image_to_scrape = None
+        self.items.clear()
+
+        yield  # send the update to the UI immediately(!)
+
+        try:
+            image_segments_from_url: Optional[list[str]] = self.router.page.params.get("image_name", None)
+
+            if not image_segments_from_url:
+                self.error = True
+                return
+
+            image_name_str = "/".join(image_segments_from_url)
+
+            try:
+                image_name = ImageName.parse(image_name_str)
+                validate_image_name(image_name)
+            except ValueError:
+                self.error = True
+                return
+
+            resolved_registry = image_name.resolve_endpoint()
+            resolved_image = image_name.resolve_image()
+            resolved_tag = image_name.resolve_tag()
+
+            with rx.session() as session:
+                query = ImageToScrape.select().where(ImageToScrape.endpoint == resolved_registry,
+                                                     ImageToScrape.image == resolved_image,
+                                                     ImageToScrape.tag == resolved_tag)
+                image_to_scrape: Optional[ImageToScrape] = session.exec(query).first()
+                if image_to_scrape is None:
+                    if not await image_exists_in_registry(image_name):
+                        self.non_existent_image = True
+                        return
+
+                    image_to_scrape = ImageToScrape(
+                        endpoint=resolved_registry,
+                        image=resolved_image,
+                        tag=resolved_tag,
+                    )
+                    session.add(image_to_scrape)
+                    session.commit()
+                    session.refresh(image_to_scrape)  # ensures that the ".id" field of image_to_scrape is populated
+
+                    self.image_to_scrape = image_to_scrape
+
+                    self.not_found = True
+                    return
+
+                self.image_to_scrape = image_to_scrape
+
+                # print(f"ID: {self.image_to_scrape.id}")
+                count_query = select(func.count(ImageUpdate.id)).where(ImageUpdate.image_id == self.image_to_scrape.id)
+                # print(count_query)
+                self.total_items = session.exec(count_query).one()
+
+                # print(f"Total items: {self.total_items}")
+
+                if self.total_items == 0:
+                    self.not_found = True
+                    return
+
+            self.load_digest_table_data_for_page()
+        finally:
+            self.loading = False
+
+
 class SearchState(rx.State):
     search_string: str = ""
     error: bool = False
@@ -94,7 +227,7 @@ class SearchState(rx.State):
 
         if not search_term:
             self.search_results.clear()
-            print("search_term is empty")
+            # print("search_term is empty")
             return
 
         try:

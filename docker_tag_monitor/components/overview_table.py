@@ -1,5 +1,6 @@
 import reflex as rx
 
+from .utils import clickable_image_details_link
 from ..models import ImageToScrape
 from ..state import OverviewTableState
 
@@ -90,7 +91,7 @@ def show_image(item: ImageToScrape, index: int) -> rx.Component:
     return rx.table.row(
         rx.table.cell(item.endpoint),
         rx.table.cell(item.image),
-        rx.table.cell(item.tag),
+        rx.table.cell(clickable_image_details_link(text=item.tag, image_to_scrape=item)),
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",
     )
