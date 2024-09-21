@@ -78,7 +78,21 @@ def show_digest(item: ImageUpdate, index: int) -> rx.Component:
     )
     return rx.table.row(
         rx.table.cell(item.scraped_at),
-        rx.table.cell(item.digest),  # TODO: also show the "copy to clipboard" button
+        rx.table.cell(
+            rx.hstack(
+                item.digest,
+                rx.tooltip(
+                    rx.icon_button(
+                        rx.icon("clipboard-copy", size=16),
+                        variant="surface",
+                        on_click=lambda: rx.set_clipboard(f"{ImageDetailsState.image_to_scrape.endpoint}/"
+                                                          f"{ImageDetailsState.image_to_scrape.image}@{item.digest}"),
+                        size="1",
+                    ),
+                    content="Copy digest to clipboard",
+                ),
+            )
+        ),
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",
     )
