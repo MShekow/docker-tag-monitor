@@ -1,7 +1,8 @@
 from . import models
 from .pages import (
     overview,
-    image_details
+    image_details,
+    site_status
 )
 
-__all__ = ['models', 'overview', 'image_details']
+__all__ = ["models", "overview", "image_details", "site_status"]

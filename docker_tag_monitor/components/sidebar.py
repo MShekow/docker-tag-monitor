@@ -1,8 +1,10 @@
 """Sidebar component for the app."""
-
+from .github_button import github_button
 from .. import styles
 
 import reflex as rx
+
+from ..constants import ORDERED_PAGE_ROUTES
 
 
 def sidebar_header() -> rx.Component:
@@ -32,18 +34,7 @@ def sidebar_footer() -> rx.Component:
         The sidebar footer component.
     """
     return rx.hstack(
-        rx.link(
-            rx.text("Docs", size="3"),
-            href="https://reflex.dev/docs/getting-started/introduction/",
-            color_scheme="gray",
-            underline="none",
-        ),
-        rx.link(
-            rx.text("Blog", size="3"),
-            href="https://reflex.dev/blog/",
-            color_scheme="gray",
-            underline="none",
-        ),
+        github_button(),
         rx.spacer(),
         rx.color_mode.button(style={"opacity": "0.8", "scale": "0.95"}),
         justify="start",
@@ -69,19 +60,19 @@ def sidebar_item(text: str, url: str) -> rx.Component:
     """
     # Whether the item is active.
     active = (rx.State.router.page.path == url.lower()) | (
-        (rx.State.router.page.path == "/") & text == "Overview"
+            (rx.State.router.page.path == "/") & text == "Overview"
     )
+
+    show_item = (rx.State.router.page.path == "/details/[...image_name]")
 
     return rx.link(
         rx.hstack(
             rx.match(
                 text,
                 ("Overview", sidebar_item_icon("home")),
-                ("Table", sidebar_item_icon("table-2")),
-                ("About", sidebar_item_icon("book-open")),
-                ("Profile", sidebar_item_icon("user")),
-                ("Settings", sidebar_item_icon("settings")),
-                sidebar_item_icon("layout-dashboard"),
+                ("Image details", sidebar_item_icon("table-2")),
+                ("Site status", sidebar_item_icon("book-open")),
+                sidebar_item_icon("layout-dashboard"),  # default, never used
             ),
             rx.text(text, size="3", weight="regular"),
             color=rx.cond(
@@ -117,6 +108,10 @@ def sidebar_item(text: str, url: str) -> rx.Component:
         ),
         underline="none",
         href=url,
+        # display=rx.cond(  # TODO: does not work
+        #     show_item,
+        #     "flex", "none",
+        # ),
         width="100%",
     )
 
@@ -127,30 +122,14 @@ def sidebar() -> rx.Component:
     Returns:
         The sidebar component.
     """
-    # Get all the decorated pages and add them to the sidebar.
     from reflex.page import get_decorated_pages
 
-    # The ordered page routes.
-    ordered_page_routes = [
-        "/",
-        "/table",
-        "/about",
-        "/account",
-        "/profile",
-        "/settings",
-    ]
-
-    # Get the decorated pages.
     pages = get_decorated_pages()
 
     # Include all pages even if they are not in the ordered_page_routes.
     ordered_pages = sorted(
         pages,
-        key=lambda page: (
-            ordered_page_routes.index(page["route"])
-            if page["route"] in ordered_page_routes
-            else len(ordered_page_routes)
-        ),
+        key=lambda page: (ORDERED_PAGE_ROUTES.index(page["route"])),
     )
 
     return rx.flex(
@@ -159,7 +138,7 @@ def sidebar() -> rx.Component:
             rx.vstack(
                 *[
                     sidebar_item(
-                        text=page.get("title", page["route"].strip("/").capitalize()),
+                        text=page.get("title"),
                         url=page["route"],
                     )
                     for page in ordered_pages

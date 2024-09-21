@@ -1,8 +1,8 @@
-"""Navbar component for the app."""
-
 import reflex as rx
 
 from docker_tag_monitor import styles
+from docker_tag_monitor.components.github_button import github_button
+from docker_tag_monitor.constants import ORDERED_PAGE_ROUTES
 
 
 def menu_item_icon(icon: str) -> rx.Component:
@@ -20,9 +20,12 @@ def menu_item(text: str, url: str) -> rx.Component:
         rx.Component: The menu item component.
     """
     # Whether the item is active.
+
     active = (rx.State.router.page.path == url.lower()) | (
-        (rx.State.router.page.path == "/") & text == "Overview"
+            (rx.State.router.page.path == "/") & text == "Overview"
     )
+
+    show_item = (rx.State.router.page.path == "/details/[...image_name]")
 
     return rx.link(
         rx.hstack(
@@ -30,10 +33,7 @@ def menu_item(text: str, url: str) -> rx.Component:
                 text,
                 ("Overview", menu_item_icon("home")),
                 ("Image details", menu_item_icon("table-2")),
-                ("About", menu_item_icon("book-open")),  # TODO fix these entries
-                ("Profile", menu_item_icon("user")),
-                ("Predict", menu_item_icon("home")),
-                ("Settings", menu_item_icon("settings")),
+                ("Site status", menu_item_icon("book-open")),
                 menu_item_icon("layout-dashboard"),
             ),
             rx.text(text, size="4", weight="regular"),
@@ -63,6 +63,10 @@ def menu_item(text: str, url: str) -> rx.Component:
                 ),
             },
             align="center",
+            # display=rx.cond(  # TODO: FIXME, does not work as expected
+            #     show_item,
+            #     "flex", "none",
+            # ),
             border_radius=styles.border_radius,
             width="100%",
             spacing="2",
@@ -81,18 +85,7 @@ def navbar_footer() -> rx.Component:
         The navbar footer component.
     """
     return rx.hstack(
-        rx.link(
-            rx.text("Docs", size="3"),
-            href="/",
-            color_scheme="gray",
-            underline="none",
-        ),
-        rx.link(
-            rx.text("Blog", size="3"),
-            href="/",
-            color_scheme="gray",
-            underline="none",
-        ),
+        github_button(),
         rx.spacer(),
         rx.color_mode.button(style={"opacity": "0.8", "scale": "0.95"}),
         justify="start",
@@ -103,30 +96,13 @@ def navbar_footer() -> rx.Component:
 
 
 def menu_button() -> rx.Component:
-    # Get all the decorated pages and add them to the menu.
     from reflex.page import get_decorated_pages
 
-    # The ordered page routes.
-    ordered_page_routes = [
-        "/",
-        "/details/[...image_name]",
-        "/about",
-        "/profile",
-        "/predict",
-        "/settings",
-    ]
-
-    # Get the decorated pages.
     pages = get_decorated_pages()
 
-    # Include all pages even if they are not in the ordered_page_routes.
     ordered_pages = sorted(
         pages,
-        key=lambda page: (
-            ordered_page_routes.index(page["route"])
-            if page["route"] in ordered_page_routes
-            else len(ordered_page_routes)
-        ),
+        key=lambda page: ORDERED_PAGE_ROUTES.index(page["route"]),
     )
 
     return rx.drawer.root(
@@ -172,17 +148,18 @@ def menu_button() -> rx.Component:
 
 
 def navbar() -> rx.Component:
-    """The navbar.
+    """
+    The navigation bar that is shown at the top of the page.
 
-    Returns:
-        The navbar component.
+    According to https://reflex.dev/docs/styling/responsive/ we hide in case we have the widest possible screen size
+    ("xl"), because in this case, we instead show the sidebar.
     """
 
     return rx.el.nav(
         rx.hstack(
             # The logo.
             rx.color_mode_cond(
-                rx.image(src="/reflex_black.svg", height="1em"),
+                rx.image(src="/reflex_black.svg", height="1em"),  # TODO fix logo
                 rx.image(src="/reflex_white.svg", height="1em"),
             ),
             rx.spacer(),

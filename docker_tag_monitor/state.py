@@ -1,10 +1,13 @@
 import re
+import time
 from typing import Optional
 
 import reflex as rx
+import requests
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlmodel import select, func, col
 
+from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS
 from .models import ImageToScrape, ImageUpdate
 
 
@@ -252,3 +255,35 @@ class SearchState(rx.State):
 
             if not self.search_results:
                 self.unknown_image = True
+
+github_stars = ""
+github_starts_last_refresh = -9999.9
+
+class NavbarState(rx.State):
+
+    @rx.var
+    def github_stars(self) -> str:
+        """
+        Refreshes the GitHub stars count every GITHUB_STARS_REFRESH_INTERVAL_SECONDS seconds (to avoid GitHub API
+        throttling).
+        """
+        global github_stars
+        global github_starts_last_refresh
+
+        if github_starts_last_refresh + GITHUB_STARS_REFRESH_INTERVAL_SECONDS > time.monotonic():
+            return github_stars
+
+        github_starts_last_refresh = time.monotonic()
+
+        try:
+            response = requests.get(f"https://api.github.com/repos/{NAMESPACE_AND_REPO}")
+            data = response.json()
+            github_stars_from_resp: int = data["stargazers_count"]
+
+            if github_stars_from_resp >= 1000:
+                github_stars = f"{github_stars_from_resp / 1000:.1f}K"  # turns e.g. 1234 into 1.2K
+            github_stars = str(github_stars_from_resp)
+        except Exception:
+            pass
+
+        return github_stars
