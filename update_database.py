@@ -17,6 +17,7 @@ from docker_tag_monitor.models import ImageToScrape, ImageUpdate
 
 logger = logging.getLogger("DatabaseUpdater")
 
+# TODO: delete ImageToScrape entries for images that do no longer exist
 
 async def update_popular_images_to_scrape():
     popular_images = await dockerhub_scraper.get_popular_images()
@@ -58,7 +59,6 @@ async def refresh_digests():
                 try:
                     result = await registry_client.head_manifest(image_name)
                 except aiohttp.ClientError as e:
-                    # TODO: this needs further investigation - e.g. is this where rate limits would come into play?
                     logging.warning(f"Failed to refresh digest for image '{image_name}': {e}")
                     continue
 
