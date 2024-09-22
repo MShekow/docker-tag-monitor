@@ -1,14 +1,14 @@
 from datetime import datetime
 
 import reflex as rx
+import sqlalchemy as sa
 import sqlmodel
-from sqlalchemy import UniqueConstraint
 
 
 class BackgroundJobExecution(rx.Model, table=True):
     __tablename__ = "background_job_execution"
-    started: datetime
-    completed: datetime
+    started: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
+    completed: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
     successful_queries: int
     failed_queries: int
 
@@ -16,11 +16,12 @@ class BackgroundJobExecution(rx.Model, table=True):
 class ImageToScrape(rx.Model, table=True):
     __tablename__ = "image_to_scrape"
     __table_args__ = (
-        UniqueConstraint("endpoint", "image", "tag", name="endpoint_image_tag"),
+        sa.UniqueConstraint("endpoint", "image", "tag", name="endpoint_image_tag"),
     )
     endpoint: str = sqlmodel.Field(index=True)
     image: str = sqlmodel.Field(index=True)
     tag: str = sqlmodel.Field(index=True)
+    added_at: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now()))
 
 
 class ImageUpdate(rx.Model, table=True):
