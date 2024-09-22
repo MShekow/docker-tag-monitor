@@ -1,5 +1,6 @@
 import reflex as rx
 
+from ..components.digests_graph import digests_graph
 from ..components.digests_table import digests_table
 from ..main_template import template
 from ..state import ImageDetailsState
@@ -69,8 +70,8 @@ def index() -> rx.Component:
                     ),
                 ),
                 ),
-        # TODO: add graph for the image updates
-        rx.cond(ImageDetailsState.items, digests_table()),
+        rx.cond(ImageDetailsState.binned_digest_updates, digests_graph()),
+        rx.cond(ImageDetailsState.digest_items, digests_table()),
         spacing="8",
         width="100%",
     )

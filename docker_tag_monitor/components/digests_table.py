@@ -109,7 +109,7 @@ def digests_table() -> rx.Component:
             ),
             rx.table.body(
                 rx.foreach(
-                    ImageDetailsState.items,
+                    ImageDetailsState.digest_items,
                     lambda item, index: show_digest(item, index),
                 )
             ),
