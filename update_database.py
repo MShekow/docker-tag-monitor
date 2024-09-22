@@ -5,6 +5,7 @@ import os
 import sys
 import time
 from datetime import timedelta, datetime
+from zoneinfo import ZoneInfo
 
 import aiohttp
 import durationpy
@@ -13,11 +14,14 @@ from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlalchemy.sql import text
 
 import database_update.dockerhub_scraper as dockerhub_scraper
-from docker_tag_monitor.models import ImageToScrape, ImageUpdate
+from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution
 
 logger = logging.getLogger("DatabaseUpdater")
 
-# TODO: delete ImageToScrape entries for images that do no longer exist
+
+# TODO: delete ImageToScrape (and ImageUpdate) entries for images that do no longer exist
+
+# TODO: delete ImageUpdate entries that are over a certain age
 
 async def update_popular_images_to_scrape():
     popular_images = await dockerhub_scraper.get_popular_images()
@@ -27,6 +31,8 @@ async def update_popular_images_to_scrape():
     images_to_scrape = await dockerhub_scraper.get_images_with_tags_to_scrape(popular_images)
     if not images_to_scrape:
         return
+
+    new_images = 0
 
     with rx.session() as session:
         for image_to_scrape in images_to_scrape:
@@ -38,8 +44,11 @@ async def update_popular_images_to_scrape():
                 try:
                     session.add(image_to_scrape)
                     session.commit()
+                    new_images += 1
                 except Exception as e:
                     logging.warning(f"Failed to add image to scrape: {e}")
+
+    logger.info(f"Added {new_images} NEW images to scrape to the database")
 
 
 async def refresh_digests():
@@ -47,7 +56,8 @@ async def refresh_digests():
     Iterates over all ImageToScrape entries and refreshes the digest for each one.
     """
     logger.info("Refreshing digests for all images")
-    # TODO: integrate BackgroundJobExecution
+    job_execution = BackgroundJobExecution(started=datetime.now(ZoneInfo('UTC')), successful_queries=0,
+                                           failed_queries=0)
     async with DockerRegistryClientAsync() as registry_client:
         await configure_dockerhub_credentials_if_provided(registry_client)
         with rx.session() as session:
@@ -59,11 +69,12 @@ async def refresh_digests():
                 try:
                     result = await registry_client.head_manifest(image_name)
                 except aiohttp.ClientError as e:
+                    job_execution.failed_queries += 1
                     logging.warning(f"Failed to refresh digest for image '{image_name}': {e}")
                     continue
 
                 digest_was_found_in_registry = result.result
-                if digest_was_found_in_registry is True:
+                if digest_was_found_in_registry:
                     # Add an entry in the database, if the digest of the most recent one is different (or missing)
                     query = ImageUpdate.select().where(ImageUpdate.image_id == image_to_scrape.id).order_by(
                         ImageUpdate.scraped_at.desc())
@@ -74,13 +85,27 @@ async def refresh_digests():
                         try:
                             session.add(image_update)
                             session.commit()
+                            job_execution.successful_queries += 1
                         except Exception as e:
+                            job_execution.failed_queries += 1
                             logging.warning(f"Failed to add image scrape update for {image_update}: {e}")
+                    else:
+                        job_execution.successful_queries += 1
                 else:
+                    job_execution.failed_queries += 1
                     logger.warning(f"Failed to refresh digest for image '{image_name}', image/tag not found "
                                    "in registry!")
 
-    logger.info("Digest refresh completed")  # TODO improve logging
+            job_execution.completed = datetime.now(ZoneInfo('UTC'))
+            try:
+                session.add(job_execution)
+                session.commit()
+                session.refresh(job_execution)  # necessary to be able to access the query counts in the log call below
+            except Exception as e:
+                logging.warning(f"Failed to add job execution to database: {e}")
+
+    logger.info(f"Digest refresh completed, {job_execution.successful_queries} successful queries, "
+                f"{job_execution.failed_queries} failed queries")
 
 
 async def configure_dockerhub_credentials_if_provided(registry_client: DockerRegistryClientAsync):
