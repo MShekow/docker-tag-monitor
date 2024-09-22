@@ -1,7 +1,6 @@
 import re
 import time
-from datetime import datetime
-from typing import Optional, TypedDict
+from typing import Optional, Literal
 
 import reflex as rx
 import requests
@@ -10,6 +9,7 @@ from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlalchemy import text
 from sqlmodel import select, func, col
 
+from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, format_graph_labels
 from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS
 from .models import ImageToScrape, ImageUpdate
 
@@ -94,11 +94,6 @@ async def image_exists_in_registry(image_name: ImageName) -> bool:
             return False
 
 
-class ImageUpdateInGraph(TypedDict):
-    interval_start: datetime
-    count: int
-
-
 POSTGRESQL_AGGREGATION_INTERVALS = {  # maps the "aggregation_interval" from the UI to the PostgreSQL interval
     "weekly": "week",
     "monthly": "month",
@@ -113,14 +108,13 @@ class ImageDetailsState(rx.State):
     image_to_scrape: Optional[ImageToScrape] = None
 
     digest_items: list[ImageUpdate] = []
-    binned_digest_updates: list[ImageUpdateInGraph] = []
-    # TODO delete
-    foo = [{'interval_start': str(datetime(2024, 9, 2, 0, 0)), 'count': 1}]
+    _digest_updates_aggregated: list[ImageUpdateAggregated] = []  # not sent to the UI
+    digest_updates_graph_data: list[ImageUpdateGraphData] = []
 
     total_items: int = 0
     offset: int = 0
     items_per_page: int = 12
-    aggregation_interval = "weekly"  # or: monthly
+    aggregation_interval: Literal["weekly", "monthly"] = "weekly"
 
     @rx.var(cache=True)
     def page_number(self) -> int:
@@ -160,13 +154,15 @@ class ImageDetailsState(rx.State):
                 self.offset).limit(self.items_per_page)
             self.digest_items = session.exec(select_query).all()
 
-    def change_aggregation_interval(self, new_interval: str):
+    def change_aggregation_interval(self, new_interval: Literal["weekly", "monthly"]):
         self.aggregation_interval = new_interval
-        self.load_binned_digest_table_data()
+        self.load_digests_updates_graph_data()
 
-    def load_binned_digest_table_data(self):
+    def load_digests_updates_graph_data(self):
+        # should always be the case, but we better check, to avoid SQL injections
         if self.aggregation_interval in POSTGRESQL_AGGREGATION_INTERVALS:
-            self.binned_digest_updates.clear()
+            self._digest_updates_aggregated.clear()
+            self.digest_updates_graph_data.clear()
 
             query = text("""SELECT
                 DATE_TRUNC(:aggregation_interval, scraped_at) AS interval_start,
@@ -189,25 +185,27 @@ class ImageDetailsState(rx.State):
             with rx.session() as session:
                 for row in session.exec(query, params=args):
                     # Note: row[0] is a datetime object representing the interval start, row[1] is the count as int
-                    self.binned_digest_updates.append(ImageUpdateInGraph(interval_start=row[0], count=row[1]))
+                    self._digest_updates_aggregated.append(ImageUpdateAggregated(interval_start=row[0], count=row[1]))
 
             self.fill_missing_weeks()
+            self.digest_updates_graph_data = format_graph_labels(self._digest_updates_aggregated,
+                                                                 self.aggregation_interval)
 
     def fill_missing_weeks(self):
-        if len(self.binned_digest_updates) < 2:
+        if len(self._digest_updates_aggregated) < 2:
             return
 
-        start_date = self.binned_digest_updates[-1]["interval_start"]
-        end_date = self.binned_digest_updates[0]["interval_start"]
+        start_date = self._digest_updates_aggregated[-1]["interval_start"]
+        end_date = self._digest_updates_aggregated[0]["interval_start"]
 
         # Create a set of existing interval_start dates to simplify the lookup
-        existing_dates = {update["interval_start"] for update in self.binned_digest_updates}
+        existing_dates = {update["interval_start"] for update in self._digest_updates_aggregated}
 
         # Iterate through each week in the range
         current_date = start_date
         while current_date <= end_date:
             if current_date not in existing_dates:
-                self.binned_digest_updates.append(ImageUpdateInGraph(interval_start=current_date, count=0))
+                self._digest_updates_aggregated.append(ImageUpdateAggregated(interval_start=current_date, count=0))
 
             if self.aggregation_interval == "weekly":
                 current_date += relativedelta(weeks=1)
@@ -215,7 +213,7 @@ class ImageDetailsState(rx.State):
                 current_date += relativedelta(months=1)
 
         # Sort the list again by interval_start
-        self.binned_digest_updates.sort(key=lambda update: update["interval_start"], reverse=True)
+        self._digest_updates_aggregated.sort(key=lambda update: update["interval_start"], reverse=True)
 
     async def on_page_load(self):
         # Reset vars to default
@@ -225,7 +223,8 @@ class ImageDetailsState(rx.State):
         self.non_existent_image = False
         self.image_to_scrape = None
         self.digest_items.clear()
-        self.binned_digest_updates.clear()
+        self._digest_updates_aggregated.clear()
+        self.digest_updates_graph_data.clear()
 
         yield  # send the update to the UI immediately(!)
 
@@ -286,7 +285,7 @@ class ImageDetailsState(rx.State):
                     self.not_found = True
                     return
 
-                self.load_binned_digest_table_data()
+                self.load_digests_updates_graph_data()
 
             self.load_digest_table_data_for_page()
         finally:

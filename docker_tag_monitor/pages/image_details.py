@@ -70,7 +70,7 @@ def index() -> rx.Component:
                     ),
                 ),
                 ),
-        rx.cond(ImageDetailsState.binned_digest_updates, digests_graph()),
+        rx.cond(ImageDetailsState.digest_updates_graph_data, digests_graph()),
         rx.cond(ImageDetailsState.digest_items, digests_table()),
         spacing="8",
         width="100%",

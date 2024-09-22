@@ -19,9 +19,9 @@ def digests_graph() -> rx.Component:
                 ),
                 rx.recharts.x_axis(type_="number"),
                 rx.recharts.y_axis(
-                    data_key="interval_start", type_="category"
+                    data_key="label", type_="category", width=200  # TODO do we really need to set the width?
                 ),
-                data=ImageDetailsState.foo,
+                data=ImageDetailsState.digest_updates_graph_data,
                 layout="vertical",
                 margin={
                     "top": 20,
@@ -30,7 +30,8 @@ def digests_graph() -> rx.Component:
                     "bottom": 20,
                 },
                 width="100%",
-                # height=300,
-            )
+            ),
+            width="100%",
         ),
+        width="100%",
     )
