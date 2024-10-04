@@ -187,11 +187,11 @@ class ImageDetailsState(rx.State):
                     # Note: row[0] is a datetime object representing the interval start, row[1] is the count as int
                     self._digest_updates_aggregated.append(ImageUpdateAggregated(interval_start=row[0], count=row[1]))
 
-            self.fill_missing_weeks()
+            self.fill_missing_intervals()
             self.digest_updates_graph_data = format_graph_labels(self._digest_updates_aggregated,
                                                                  self.aggregation_interval)
 
-    def fill_missing_weeks(self):
+    def fill_missing_intervals(self):
         if len(self._digest_updates_aggregated) < 2:
             return
 
@@ -211,6 +211,8 @@ class ImageDetailsState(rx.State):
                 current_date += relativedelta(weeks=1)
             elif self.aggregation_interval == "monthly":
                 current_date += relativedelta(months=1)
+            else:
+                raise ValueError(f"Unknown aggregation interval: {self.aggregation_interval}")
 
         # Sort the list again by interval_start
         self._digest_updates_aggregated.sort(key=lambda update: update["interval_start"], reverse=True)
