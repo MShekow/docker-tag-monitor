@@ -114,7 +114,7 @@ class ImageDetailsState(rx.State):
     total_items: int = 0
     offset: int = 0
     items_per_page: int = 12
-    aggregation_interval: Literal["weekly", "monthly"] = "weekly"
+    aggregation_interval: str = "weekly"  # or "monthly", but we cannot use Literal["weekly", "monthly"] in Reflex state
 
     @rx.var(cache=True)
     def page_number(self) -> int:

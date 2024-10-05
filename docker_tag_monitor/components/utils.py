@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TypedDict, Literal
+from typing import TypedDict
 
 import reflex as rx
 
@@ -22,7 +22,7 @@ def clickable_image_details_link(text: str, image_to_scrape: ImageToScrape) -> r
 
 
 def format_graph_labels(digest_updates_aggregated: list[ImageUpdateAggregated],
-                        aggregation_interval: Literal["weekly", "monthly"]) -> list[ImageUpdateGraphData]:
+                        aggregation_interval: str) -> list[ImageUpdateGraphData]:
     def label(start: datetime) -> str:
         if aggregation_interval == "weekly":
             end = start + timedelta(days=6)
