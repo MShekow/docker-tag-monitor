@@ -1,6 +1,4 @@
 services:
-
-
   frontend:
     image: docker-tag-monitor:frontend
     build:

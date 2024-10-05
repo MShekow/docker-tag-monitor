@@ -69,7 +69,7 @@ def index() -> rx.Component:
                         ),
                     ),
                 ),
-                ),
+                ), # TODO: fix bug that labels aren't properly shown in the graph, once there are 2+ rows
         rx.cond(ImageDetailsState.digest_updates_graph_data, digests_graph()),
         rx.cond(ImageDetailsState.digest_items, digests_table()),
         spacing="8",
