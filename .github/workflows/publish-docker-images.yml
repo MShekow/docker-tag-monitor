@@ -57,7 +57,8 @@ jobs:
       - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64
+#          platforms: linux/amd64,linux/arm64 // wait for https://github.com/reflex-dev/reflex/issues/4076 to be resolved
+          platforms: linux/amd64
           push: true
           target: backend
           tags: ${{ steps.meta_backend.outputs.tags }}
