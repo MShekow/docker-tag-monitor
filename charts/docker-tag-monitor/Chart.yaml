@@ -1,0 +1,17 @@
+apiVersion: v2
+name: docker-tag-monitor
+description: Very simple chart for the Docker Tag Monitor application.
+
+type: application
+
+version: 0.0.1
+
+appVersion: "2024.10.06"
+
+dependencies:
+  - name: postgresql
+    repository: oci://registry-1.docker.io/bitnamicharts
+    version: 16.0.1
+  - name: valkey
+    repository: oci://registry-1.docker.io/bitnamicharts
+    version: 1.0.2

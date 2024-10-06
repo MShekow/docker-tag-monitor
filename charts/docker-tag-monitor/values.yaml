@@ -1,0 +1,97 @@
+frontend:
+  replicaCount: 1
+  resources: { }
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+  image:
+    registry: ghcr.io
+    repository: mshekow/docker-tag-monitor-frontend
+    # defaults to the chart appVersion
+    tag: ""
+    pullPolicy: IfNotPresent
+
+backend:
+  replicaCount: 1
+  processesPerReplica: 2
+  resources: { }
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  # TODO: figure out how to do a liveless probe for Reflex backend
+  image:
+    registry: ghcr.io
+    repository: mshekow/docker-tag-monitor-backend
+    # defaults to the chart appVersion
+    tag: ""
+    pullPolicy: IfNotPresent
+
+
+# This is for the secretes for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: [ ]
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/ 
+podAnnotations: { }
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: { }
+
+podSecurityContext: { }
+# fsGroup: 2000
+
+securityContext: { }
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false
+  className: ""
+  annotations: { }
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts: [ ]
+  #  - host: chart-example.local
+  tls: [ ]
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+
+nodeSelector: { }
+tolerations: [ ]
+affinity: { }
+
+# Configuration of the sub-charts
+valkey:
+  architecture: "standalone" # default is "replication"
+  auth:
+    enabled: false
+
+postgresql:
+  auth:
+    username: postgres
+    password: postgres
+    database: postgres

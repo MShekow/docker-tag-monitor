@@ -1,0 +1,15 @@
+# Overrides for a local cluster
+ingress:
+  enabled: true
+  className: traefik
+#  annotations:
+#    # causes an automatic redirect from http to https
+#    traefik.ingress.kubernetes.io/redirect-entry-point: https
+#    # refers to the .metadata.name value in acme-issuer.yml deployed to the augmentedmind K8s cluster
+#    cert-manager.io/cluster-issuer: letsencrypt-prod
+#  tls:
+#    - hosts:
+#        - docker-tag-monitor.augmentedmind.de
+#      secretName: docker-tag-monitor-letsencrypt-cert  # cert-manager will store the created certificate in this secret
+  hosts:
+    - host: 127.0.0.1.nip.io
