@@ -6,8 +6,6 @@ from ..main_template import template
 from ..state import ImageDetailsState
 
 
-# TODO don't show "Image details" in navbar menu, unless the route is active
-
 @template(route="/details/[...image_name]", title="Image details", on_load=ImageDetailsState.on_page_load)
 def index() -> rx.Component:
     return rx.vstack(
@@ -69,7 +67,7 @@ def index() -> rx.Component:
                         ),
                     ),
                 ),
-                ), # TODO: fix bug that labels aren't properly shown in the graph, once there are 2+ rows
+                ),
         rx.cond(ImageDetailsState.digest_updates_graph_data, digests_graph()),
         rx.cond(ImageDetailsState.digest_items, digests_table()),
         spacing="8",
