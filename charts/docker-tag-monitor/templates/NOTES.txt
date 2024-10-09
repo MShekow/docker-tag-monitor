@@ -3,8 +3,6 @@ Chart successfully installed!
 {{- if .Values.ingress.enabled }}
 Get the application URL by running these commands:
 {{- range $host := .Values.ingress.hosts }}
-  {{- range .paths }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}
-  {{- end }}
 {{- end }}
 {{- end }}
