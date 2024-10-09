@@ -7,14 +7,15 @@ RUN python -m venv $VIRTUAL_ENV
 COPY requirements.txt .
 RUN $VIRTUAL_ENV/bin/pip install --no-cache-dir -r requirements.txt
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# Download Node.js
+RUN reflex init
 COPY . .
-# Note: "reflex export" implicitly runs "reflex init", which downloads Node.js
-# Note: we also remove large folders inside the .web folder which we need in neither the frontend nor backend
+# Note: we also remove the largest folders inside the .web folder, because we don't need them in backend image
 RUN reflex export --frontend-only --no-zip && rm -rf .web/node_modules .web/.next
 # The "reflex" command is an executable script with a shebang to /app/.venv/bin/python, which itself is a symlink to
-# /usr/local/bin/python. However, the ubuntu/python image we use at run-time does not have the Python binary at this
-# path, but instead it resides at /usr/bin/python3. We therefore remove the symlink and create a new one to the correct
-# Python binary.
+# /usr/local/bin/python (in the official python:... image). However, the ubuntu/python image we use at run-time does
+# have the Python binary at this path, but instead it resides at /usr/bin/python3. We therefore remove the symlink
+# and create a new one to the correct Python binary.
 RUN rm .venv/bin/python && ln -s /usr/bin/python3 .venv/bin/python
 
 # Use the Ubuntu chiseled minimal Docker image for Python. In contrast to Google's "distroless" Python image, which
@@ -33,7 +34,7 @@ COPY --from=builder /app /app
 STOPSIGNAL SIGKILL
 # Instead of figuring out how Rockraft and Pebble services work (having tried and failed with a tutorial such as
 # https://documentation.ubuntu.com/rockcraft/en/latest/how-to/rocks/convert-to-pebble-layer/), we simply copy a
-# statically-linked shell from BusyBox and disable the default ["pebble", "enter"] entrypoint.
+# statically-linked shell from BusyBox (needed by CMD) and disable the default ["pebble", "enter"] entrypoint.
 # Adding a shell (with no other tools) does not negatively affect the image security.
 COPY --from=busybox:uclibc /bin/sh /bin/sh
 ENTRYPOINT []
