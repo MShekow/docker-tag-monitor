@@ -8,6 +8,7 @@ services:
       - "8000:8080"
     environment:
       CADDY_DOMAIN: ":8080"  # See https://caddyserver.com/docs/caddyfile/concepts#addresses
+      BACKEND_DNS: "backend"
     depends_on:
       - backend
 
