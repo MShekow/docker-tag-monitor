@@ -25,7 +25,7 @@ def menu_item(text: str, url: str) -> rx.Component:
             (rx.State.router.page.path == "/") & text == "Overview"
     )
 
-    show_item = (rx.State.router.page.path == "/details/[...image_name]")
+    show_item = (url.lower() != "/details/[...image_name]") | (rx.State.router.page.path == "/details/[...image_name]")
 
     return rx.link(
         rx.hstack(
@@ -63,17 +63,17 @@ def menu_item(text: str, url: str) -> rx.Component:
                 ),
             },
             align="center",
-            # display=rx.cond(  # TODO: FIXME, does not work as expected
-            #     show_item,
-            #     "flex", "none",
-            # ),
+            display=rx.cond(
+                show_item,
+                "flex", "none",
+            ),
             border_radius=styles.border_radius,
             width="100%",
             spacing="2",
             padding="0.35em",
         ),
         underline="none",
-        href=url,
+        href=rx.cond(url.lower() != "/details/[...image_name]", url, "#"),
         width="100%",
     )
 

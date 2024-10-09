@@ -63,7 +63,7 @@ def sidebar_item(text: str, url: str) -> rx.Component:
             (rx.State.router.page.path == "/") & text == "Overview"
     )
 
-    show_item = (rx.State.router.page.path == "/details/[...image_name]")
+    show_item = (url.lower() != "/details/[...image_name]") | (rx.State.router.page.path == "/details/[...image_name]")
 
     return rx.link(
         rx.hstack(
@@ -107,11 +107,11 @@ def sidebar_item(text: str, url: str) -> rx.Component:
             padding="0.35em",
         ),
         underline="none",
-        href=url,
-        # display=rx.cond(  # TODO: does not work
-        #     show_item,
-        #     "flex", "none",
-        # ),
+        href=rx.cond(url.lower() != "/details/[...image_name]", url, "#"),
+        display=rx.cond(
+            show_item,
+            "flex", "none",
+        ),
         width="100%",
     )
 
