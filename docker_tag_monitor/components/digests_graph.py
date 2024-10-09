@@ -30,6 +30,7 @@ def digests_graph() -> rx.Component:
                     "bottom": 20,
                 },
                 width="100%",
+                height=500,  # TODO: needs a better solution
             ),
             width="100%",
         ),
