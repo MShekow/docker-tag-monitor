@@ -159,8 +159,8 @@ def navbar() -> rx.Component:
         rx.hstack(
             # The logo.
             rx.color_mode_cond(
-                rx.image(src="/reflex_black.svg", height="1em"),  # TODO fix logo
-                rx.image(src="/reflex_white.svg", height="1em"),
+                rx.image(src="/docker-tag-monitor-black.svg", height="2em"),
+                rx.image(src="/docker-tag-monitor-white.svg", height="2em"),
             ),
             rx.spacer(),
             menu_button(),
