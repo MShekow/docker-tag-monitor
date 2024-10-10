@@ -1,6 +1,7 @@
 import re
 import time
-from typing import Optional, Literal
+from datetime import datetime
+from typing import Optional, Literal, TypedDict
 
 import reflex as rx
 import requests
@@ -9,13 +10,13 @@ from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlalchemy import text
 from sqlmodel import select, func, col
 
-from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, format_graph_labels
+from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, format_graph_labels, ImageToScrapeWithCount
 from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS
 from .models import ImageToScrape, ImageUpdate
 
 
 class OverviewTableState(rx.State):
-    items: list[ImageToScrape] = []
+    items: list[ImageToScrapeWithCount] = []
 
     total_items: int = 0
     offset: int = 0
@@ -54,9 +55,41 @@ class OverviewTableState(rx.State):
         self.load_data()
 
     def load_data(self):
+        # Note: we format the date already in SQL instead of doing it in Python, because otherwise Reflex would throw
+        # this error when trying to call strftime on the item["added_at"] datetime object:
+        # TypeError: You must provide an annotation for the state var `item["added_at"]`.
+        # Annotation cannot be `typing.Any`
+        query = text("""SELECT
+            image_to_scrape.endpoint,
+            image_to_scrape.image,
+            image_to_scrape.tag,
+            TO_CHAR(image_to_scrape.added_at, 'YYYY-MM-DD') AS added_at,
+            COUNT(image_update.id) AS image_update_count
+        FROM
+            image_to_scrape
+        LEFT JOIN
+            image_update ON image_to_scrape.id = image_update.image_id
+        GROUP BY
+            image_to_scrape.endpoint, image_to_scrape.image, image_to_scrape.tag, image_to_scrape.added_at
+        ORDER BY
+            image_update_count DESC
+        LIMIT :limit OFFSET :offset;""")
+
+        args = {
+            "limit": self.items_per_page,
+            "offset": self.offset
+        }
+
         with rx.session() as session:
-            select_query = ImageToScrape.select().offset(self.offset).limit(self.items_per_page)
-            self.items = session.exec(select_query).all()
+            self.items.clear()
+            for row in session.exec(query, params=args):
+                self.items.append(ImageToScrapeWithCount(
+                    endpoint=row[0],
+                    image=row[1],
+                    tag=row[2],
+                    added_at=row[3],
+                    image_update_count=row[4]
+                ))
 
             self.total_items = session.exec(select(func.count(ImageToScrape.id))).one()
 

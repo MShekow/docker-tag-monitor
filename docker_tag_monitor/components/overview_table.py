@@ -1,8 +1,7 @@
 import reflex as rx
 
 from .utils import clickable_image_details_link
-from ..models import ImageToScrape
-from ..state import OverviewTableState
+from ..state import OverviewTableState, ImageToScrapeWithCount
 
 
 def _header_cell(text: str, icon: str) -> rx.Component:
@@ -77,7 +76,7 @@ def _pagination_view() -> rx.Component:
     )
 
 
-def show_image(item: ImageToScrape, index: int) -> rx.Component:
+def show_image(item: ImageToScrapeWithCount, index: int) -> rx.Component:
     bg_color = rx.cond(
         index % 2 == 0,
         rx.color("gray", 1),
@@ -89,9 +88,11 @@ def show_image(item: ImageToScrape, index: int) -> rx.Component:
         rx.color("accent", 3),
     )
     return rx.table.row(
-        rx.table.cell(item.endpoint),
-        rx.table.cell(item.image),
-        rx.table.cell(clickable_image_details_link(text=item.tag, image_to_scrape=item)),
+        rx.table.cell(item["endpoint"]),
+        rx.table.cell(item["image"]),
+        rx.table.cell(clickable_image_details_link(text=item["tag"], image_to_scrape=item)),
+        rx.table.cell(item["added_at"]),
+        rx.table.cell(item["image_update_count"]),
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",
     )
@@ -105,6 +106,8 @@ def overview_table() -> rx.Component:
                     rx.table.column_header_cell("Registry"),
                     rx.table.column_header_cell("Repository"),
                     rx.table.column_header_cell("Tag"),
+                    rx.table.column_header_cell("Monitored since"),
+                    rx.table.column_header_cell("Tag updates"),
                 ),
             ),
             rx.table.body(

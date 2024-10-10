@@ -3,7 +3,13 @@ from typing import TypedDict
 
 import reflex as rx
 
-from docker_tag_monitor.models import ImageToScrape
+
+class ImageToScrapeWithCount(TypedDict):
+    endpoint: str
+    image: str
+    tag: str
+    added_at: str
+    image_update_count: int
 
 
 class ImageUpdateAggregated(TypedDict):
@@ -16,9 +22,9 @@ class ImageUpdateGraphData(TypedDict):
     count: int
 
 
-def clickable_image_details_link(text: str, image_to_scrape: ImageToScrape) -> rx.Component:
+def clickable_image_details_link(text: str, image_to_scrape: ImageToScrapeWithCount) -> rx.Component:
     return rx.link(text,
-                   href=f"/details/{image_to_scrape.endpoint}/{image_to_scrape.image}:{image_to_scrape.tag}")
+                   href=f"/details/{image_to_scrape["endpoint"]}/{image_to_scrape["image"]}:{image_to_scrape["tag"]}")
 
 
 def format_graph_labels(digest_updates_aggregated: list[ImageUpdateAggregated],
