@@ -1,5 +1,1 @@
-# TODO: migrate to Poetry
-reflex==0.6.1
-docker_registry_client_async==1.0.0
-psycopg[binary]==3.2.1
-durationpy==0.7
+poetry==1.8.3
