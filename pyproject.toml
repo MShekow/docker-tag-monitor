@@ -11,5 +11,5 @@ package-mode = false
 python = "^3.12"
 reflex = "0.6.1"
 docker-registry-client-async = "1.0.0"
-psycopg = {version = "3.2.1", extras = ["binary"]}
+psycopg = {version = "3.2.3", extras = ["binary"]}
 durationpy = "0.9"
