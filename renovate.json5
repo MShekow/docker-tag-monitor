@@ -12,7 +12,7 @@
     {
       "description": "Automerge Poetry updates",
       "matchPackageNames": ["poetry"],
-      "matchManagers": ["pip_requirements "],
+      "matchManagers": ["pip_requirements"],
       "automerge": true
     }
   ],
