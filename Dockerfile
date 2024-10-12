@@ -1,5 +1,5 @@
 ARG VIRTUAL_ENV=/app/.venv
-FROM python:3.12 AS builder
+FROM python:3.13 AS builder
 ARG VIRTUAL_ENV
 WORKDIR /app
 
