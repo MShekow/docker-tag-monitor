@@ -554,21 +554,6 @@ test = ["certifi", "cryptography-vectors (==43.0.1)", "pretend", "pytest (>=6.2.
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
-name = "dill"
-version = "0.3.9"
-description = "serialize all of Python"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "dill-0.3.9-py3-none-any.whl", hash = "sha256:468dff3b89520b474c0397703366b7b95eebe6303f108adf9b19da1f702be87a"},
-    {file = "dill-0.3.9.tar.gz", hash = "sha256:81aa267dddf68cbfe8029c42ca9ec6a4ab3b22371d1c450abc54422577b4512c"},
-]
-
-[package.extras]
-graph = ["objgraph (>=1.7.2)"]
-profile = ["gprof2dot (>=2022.7.29)"]
-
-[[package]]
 name = "distro"
 version = "1.9.0"
 description = "Distro - an OS platform information API"
@@ -1965,20 +1950,19 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "reflex"
-version = "0.6.1"
+version = "0.6.3"
 description = "Web apps in pure Python."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "reflex-0.6.1-py3-none-any.whl", hash = "sha256:172980f8b0c2ab65f84ab4ee0fbda0bf856dbc28dc76e8b025d331d08422ebba"},
-    {file = "reflex-0.6.1.tar.gz", hash = "sha256:4bc40658d148c835c1a314b9cbbf4b00ba5bd75b9f2d819fab611e5a8a3f58c0"},
+    {file = "reflex-0.6.3-py3-none-any.whl", hash = "sha256:0486da6a08e8dbf7d15e191454614be2be7762ec6782f8c49c3787efbec6e7b1"},
+    {file = "reflex-0.6.3.tar.gz", hash = "sha256:2b43fb7be68e1b595e23f82755942da63e4eb27eecd3ea33373924da660a415e"},
 ]
 
 [package.dependencies]
 alembic = ">=1.11.1,<2.0"
 build = ">=1.0.3,<2.0"
 charset-normalizer = ">=3.3.2,<4.0"
-dill = ">=0.3.8,<0.4"
 distro = {version = ">=1.8.0,<2.0", markers = "sys_platform == \"linux\""}
 fastapi = ">=0.96.0,<0.111.0 || >0.111.0,<0.111.1 || >0.111.1"
 gunicorn = ">=20.1.0,<24.0"
@@ -1996,7 +1980,7 @@ redis = ">=4.3.5,<6.0"
 reflex-chakra = ">=0.6.0"
 reflex-hosting-cli = ">=0.1.2,<2.0"
 rich = ">=13.0.0,<14.0"
-setuptools = ">=69.1.1,<70.2"
+setuptools = ">=75.0"
 sqlmodel = ">=0.0.14,<0.1"
 starlette-admin = ">=0.11.0,<1.0"
 tomlkit = ">=0.12.4,<1.0"
@@ -2127,18 +2111,23 @@ jeepney = ">=0.6"
 
 [[package]]
 name = "setuptools"
-version = "70.1.1"
+version = "75.2.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-70.1.1-py3-none-any.whl", hash = "sha256:a58a8fde0541dab0419750bcc521fbdf8585f6e5cb41909df3a472ef7b81ca95"},
-    {file = "setuptools-70.1.1.tar.gz", hash = "sha256:937a48c7cdb7a21eb53cd7f9b59e525503aa8abaf3584c730dc5f7a5bec3a650"},
+    {file = "setuptools-75.2.0-py3-none-any.whl", hash = "sha256:a7fcb66f68b4d9e8e66b42f9876150a3371558f98fa32222ffaa5bced76406f8"},
+    {file = "setuptools-75.2.0.tar.gz", hash = "sha256:753bb6ebf1f465a1912e19ed1d41f403a79173a9acf66a42e7e6aec45c3c16ec"},
 ]
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
-testing = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "importlib-metadata", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "mypy (==1.10.0)", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.1)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy", "pytest-perf", "pytest-ruff (>=0.3.2)", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.5.2)"]
+core = ["importlib-metadata (>=6)", "importlib-resources (>=5.10.2)", "jaraco.collections", "jaraco.functools", "jaraco.text (>=3.7)", "more-itertools", "more-itertools (>=8.8)", "packaging", "packaging (>=24)", "platformdirs (>=2.6.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+cover = ["pytest-cov"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
+enabler = ["pytest-enabler (>=2.2)"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (==1.11.*)", "pytest-mypy"]
 
 [[package]]
 name = "shellingham"
@@ -2800,4 +2789,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "9d19f7ce5c73d580c4aa3ec8bce9e8387f3a9eed7514af6af432ede05a6a3829"
+content-hash = "476ba14cb61a38a12e858d650a7288d4aea6794e6e18ef691019245b6fd078d9"
