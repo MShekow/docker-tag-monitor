@@ -28,6 +28,11 @@ class DailyScanSummary(TypedDict):
     failed_scans: int
 
 
+class DailyScanDuration(TypedDict):
+    date: str
+    duration_minutes: float
+
+
 def clickable_image_details_link(text: str, image_to_scrape: ImageToScrapeWithCount) -> rx.Component:
     return rx.link(text,
                    href=f"/details/{image_to_scrape["endpoint"]}/{image_to_scrape["image"]}:{image_to_scrape["tag"]}")

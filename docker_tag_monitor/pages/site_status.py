@@ -1,5 +1,6 @@
 import reflex as rx
 
+from ..components.daily_scan_duration_graph import daily_scan_duration_graph
 from ..components.daily_scan_summary_graph import daily_scan_summary_graph
 from ..main_template import template
 from ..state import StatusState
@@ -16,7 +17,7 @@ def index() -> rx.Component:
                 "graph shows a daily summary of the successful and failed scans."),
         daily_scan_summary_graph(),
         rx.text("The next graph shows the average scan duration per day."),
-        # TODO: add graph
+        daily_scan_duration_graph(),
         spacing="8",
         width="100%",
     )

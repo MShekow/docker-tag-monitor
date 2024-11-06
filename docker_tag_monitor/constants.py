@@ -8,4 +8,4 @@ ORDERED_PAGE_ROUTES = [  # Note: keep these in sync with the "@template(route=..
     "/status",
 ]
 
-MAX_DAILY_SCAN_SUMMARY_ENTRIES_IN_GRAPH = 50
+MAX_DAILY_SCAN_ENTRIES_IN_GRAPH = 50
