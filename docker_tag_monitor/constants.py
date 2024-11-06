@@ -7,3 +7,5 @@ ORDERED_PAGE_ROUTES = [  # Note: keep these in sync with the "@template(route=..
     "/details/[...image_name]",
     "/status",
 ]
+
+MAX_DAILY_SCAN_SUMMARY_ENTRIES_IN_GRAPH = 50

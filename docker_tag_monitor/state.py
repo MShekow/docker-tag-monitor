@@ -1,7 +1,6 @@
 import re
 import time
-from datetime import datetime
-from typing import Optional, Literal, TypedDict
+from typing import Optional, Literal
 
 import reflex as rx
 import requests
@@ -10,8 +9,10 @@ from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlalchemy import text
 from sqlmodel import select, func, col
 
-from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, format_graph_labels, ImageToScrapeWithCount
-from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS
+from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, format_graph_labels, ImageToScrapeWithCount, \
+    DailyScanSummary
+from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS, \
+    MAX_DAILY_SCAN_SUMMARY_ENTRIES_IN_GRAPH
 from .models import ImageToScrape, ImageUpdate
 
 
@@ -402,3 +403,37 @@ class NavbarState(rx.State):
             pass
 
         return github_stars
+
+class StatusState(rx.State):
+    daily_scan_summary_graph_data: list[DailyScanSummary] = []
+
+    def load_data(self):
+        self.daily_scan_summary_graph_data.clear()
+        # Retrieve the aggregation of BackgroundJobExecution objects, returning one row per day, with the columns:
+        # -  the day
+        # - number of BackgroundJobExecutions where failed_queries is 0 and successful_queries > 0
+        # - number of BackgroundJobExecutions where either successful_queries is 0 or failed_queries > 0
+        query = text("""WITH date_series AS (
+            SELECT generate_series(
+                           (SELECT MIN(DATE_TRUNC('day', started)) FROM background_job_execution),
+                           (SELECT MAX(DATE_TRUNC('day', started)) FROM background_job_execution),
+                           '1 day'::interval
+                   )::date AS day
+        )
+        SELECT
+            date_series.day,
+            COALESCE(SUM(CASE WHEN background_job_execution.failed_queries = 0 AND background_job_execution.successful_queries > 0 THEN 1 ELSE 0 END), 0) AS successful_scans,
+            COALESCE(SUM(CASE WHEN background_job_execution.successful_queries = 0 OR background_job_execution.failed_queries > 0 THEN 1 ELSE 0 END), 0) AS failed_scans
+        FROM date_series LEFT JOIN background_job_execution ON
+                DATE_TRUNC('day', background_job_execution.started) = date_series.day
+        GROUP BY date_series.day
+        ORDER BY date_series.day DESC
+        LIMIT :limit""")
+
+        with rx.session() as session:
+            for row in session.exec(query, params={"limit": MAX_DAILY_SCAN_SUMMARY_ENTRIES_IN_GRAPH}):
+                # Note: row[0] is a date object representing the day, row[1] and [2] are the successful/failed scans
+                daily_scan_summary = DailyScanSummary(date=str(row[0]), successful_scans=row[1], failed_scans=row[2])
+                self.daily_scan_summary_graph_data.append(daily_scan_summary)
+
+        self.daily_scan_summary_graph_data.reverse()

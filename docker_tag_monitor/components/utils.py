@@ -22,6 +22,12 @@ class ImageUpdateGraphData(TypedDict):
     count: int
 
 
+class DailyScanSummary(TypedDict):
+    date: str
+    successful_scans: int
+    failed_scans: int
+
+
 def clickable_image_details_link(text: str, image_to_scrape: ImageToScrapeWithCount) -> rx.Component:
     return rx.link(text,
                    href=f"/details/{image_to_scrape["endpoint"]}/{image_to_scrape["image"]}:{image_to_scrape["tag"]}")
