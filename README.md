@@ -1,11 +1,8 @@
 ToDos:
-- Implement graphs for status page
-- Clean up compose file (crawler vs. scraper), rename volume
-- Add Renovate
-- Check GitHub Dependabot alerts
-- Add license
-- Write Readme and blog post
 - Implement missing backend features
+- Add license
+- Performance analysis of SQL queries
+- Write Readme and blog post
 - Add DockerHub credentials to Helm chart
 
 ## Package management
