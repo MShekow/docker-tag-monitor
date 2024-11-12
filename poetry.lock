@@ -1966,13 +1966,13 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "reflex"
-version = "0.6.3"
+version = "0.6.5"
 description = "Web apps in pure Python."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "reflex-0.6.3-py3-none-any.whl", hash = "sha256:0486da6a08e8dbf7d15e191454614be2be7762ec6782f8c49c3787efbec6e7b1"},
-    {file = "reflex-0.6.3.tar.gz", hash = "sha256:2b43fb7be68e1b595e23f82755942da63e4eb27eecd3ea33373924da660a415e"},
+    {file = "reflex-0.6.5-py3-none-any.whl", hash = "sha256:ac8e981a0decae47b539561c59d289e676f700335cb0b8298bb68454e8ab3253"},
+    {file = "reflex-0.6.5.tar.gz", hash = "sha256:65a578a00471eb5be741abfdebb7c79b27390ad14ea1b884319be54375118a7d"},
 ]
 
 [package.dependencies]
@@ -1994,7 +1994,7 @@ python-multipart = ">=0.0.5,<0.1"
 python-socketio = ">=5.7.0,<6.0"
 redis = ">=4.3.5,<6.0"
 reflex-chakra = ">=0.6.0"
-reflex-hosting-cli = ">=0.1.2,<2.0"
+reflex-hosting-cli = ">=0.1.15,<2.0"
 rich = ">=13.0.0,<14.0"
 setuptools = ">=75.0"
 sqlmodel = ">=0.0.14,<0.1"
@@ -2022,13 +2022,13 @@ reflex = ">=0.6.0a"
 
 [[package]]
 name = "reflex-hosting-cli"
-version = "0.1.13"
+version = "0.1.15"
 description = "Reflex Hosting CLI"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "reflex_hosting_cli-0.1.13-py3-none-any.whl", hash = "sha256:5bfec7f3d7ce4bbd703989f086494e586a641ef37c9e60e60fb82bdfb07ff227"},
-    {file = "reflex_hosting_cli-0.1.13.tar.gz", hash = "sha256:c5d6afdcfeb74cee046a374ddbd59116ab8ed797dae688fcc744dabae24dc571"},
+    {file = "reflex_hosting_cli-0.1.15-py3-none-any.whl", hash = "sha256:c471f5570b8797e290844edcc079241aa27457112c01188dc0f8a5ccc2364003"},
+    {file = "reflex_hosting_cli-0.1.15.tar.gz", hash = "sha256:42a2a030b8bfba728cbd2c5cc37df0fcc8c2966efc649c57806c6616efb994c4"},
 ]
 
 [package.dependencies]
@@ -2797,4 +2797,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "476ba14cb61a38a12e858d650a7288d4aea6794e6e18ef691019245b6fd078d9"
+content-hash = "7684fba55707928f27324e6772477aba36b4d9ce91b5f8f9adea88cbd3ec1b27"
