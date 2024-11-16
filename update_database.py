@@ -21,9 +21,6 @@ from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobE
 
 logger = logging.getLogger("DatabaseUpdater")
 
-
-# TODO: delete ImageToScrape (and ImageUpdate) entries for images that do no longer exist
-
 # TODO: Figure out whether we have to do ratelimit detection and insert extra waits
 
 async def update_popular_images_to_scrape():
@@ -49,7 +46,7 @@ async def update_popular_images_to_scrape():
                     session.commit()
                     new_images += 1
                 except Exception as e:
-                    logging.warning(f"Failed to add image to scrape: {e}")
+                    logger.warning(f"Failed to add image to scrape: {e}")
 
     logger.info(f"Added {new_images} NEW images to scrape to the database")
 
@@ -76,16 +73,17 @@ async def refresh_digests():
                     if res is not None and not res.result and res.client_response.status == 401:
                         result_indices_with_invalid_token.append(i)
                 if result_indices_with_invalid_token:
-                    registry_client.tokens.clear()
+                    registry_client.tokens.clear()  # force registry_client to re-generate tokens
                     for i in result_indices_with_invalid_token:
                         results[i] = await fetch_digest(results[i][0])
                         img_to_scrape = results[i][0]
                         refetched_result = results[i][1]
-                        if refetched_result and refetched_result.client_response.status == 401:
+                        if refetched_result and not refetched_result.result:
                             logger.warning(
                                 f"Failed to refresh digest for image "
-                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}', client "
-                                f"token expired, repeating the query again shortly")
+                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}'; "
+                                f"Status code={refetched_result.client_response.status}; "
+                                f"headers={refetched_result.client_response.headers}")
 
             async def fetch_digest(img_to_scrape: ImageToScrape) \
                     -> Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]:
@@ -95,10 +93,10 @@ async def refresh_digests():
                     result = await registry_client.head_manifest(image_name)
                     return img_to_scrape, result
                 except aiohttp.ClientError as e:
-                    logging.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
+                    logger.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
                     return img_to_scrape, None
 
-            async def process_results(
+            async def update_database_entries(
                     results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
                 for img_to_scrape, result in results:
                     if result is None:
@@ -119,16 +117,23 @@ async def refresh_digests():
                                 job_execution.successful_queries += 1
                             except Exception as e:
                                 job_execution.failed_queries += 1
-                                logging.warning(f"Failed to add image scrape update for {image_update}: {e}")
+                                logger.warning(f"Failed to add image scrape update for {image_update}: {e}")
                         else:
                             job_execution.successful_queries += 1
                     else:
                         job_execution.failed_queries += 1
-                        logger.warning(
-                            f"Failed to refresh digest for image "
-                            f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}', "
-                            f"image/tag not found in registry! Status code={result.client_response.status}; "
-                            f"headers={result.client_response.headers}")
+                        image_not_found_in_registry = result.client_response.status == 404
+                        if image_not_found_in_registry:
+                            try:
+                                session.delete(img_to_scrape)
+                                session.commit()
+                                logger.info(f"Deleted ImageToScrape "
+                                            f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
+                                            f"because it is no longer found in the registry")
+                            except Exception as e:
+                                logger.info(f"Unable to delete ImageToScrape "
+                                            f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
+                                            f"from the registry (image is no longer found in the registry): {e}")
 
             batch_size = 10
             for image_to_scrape in session.exec(query):
@@ -136,13 +141,13 @@ async def refresh_digests():
                 if len(images_to_scrape) == batch_size:
                     results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
                     await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
-                    await process_results(results)
+                    await update_database_entries(results)
                     images_to_scrape = []
 
             if images_to_scrape:  # batch size has not been reached, but there are still some images left to process
                 results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
                 await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
-                await process_results(results)
+                await update_database_entries(results)
 
             job_execution.completed = datetime.now(ZoneInfo('UTC'))
             try:
@@ -150,7 +155,7 @@ async def refresh_digests():
                 session.commit()
                 session.refresh(job_execution)  # necessary to be able to access the query counts in the log call below
             except Exception as e:
-                logging.warning(f"Failed to add job execution to database: {e}")
+                logger.warning(f"Failed to add job execution to database: {e}")
 
     logger.info(f"Digest refresh completed, {job_execution.successful_queries} successful queries, "
                 f"{job_execution.failed_queries} failed queries")
@@ -213,8 +218,8 @@ async def main():
 
             digest_refresh_duration = timedelta(seconds=time.monotonic() - now)
             if digest_refresh_duration > digest_refresh_interval:
-                logging.warning(f"Digest refresh took longer than the interval - some optimizations are required "
-                                f"(duration: {digest_refresh_duration}")
+                logger.warning(f"Digest refresh took longer than the interval - some optimizations are required "
+                               f"(duration: {digest_refresh_duration}")
         else:
             await asyncio.sleep(10)
 
