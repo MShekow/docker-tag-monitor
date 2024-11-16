@@ -188,7 +188,8 @@ class ImageDetailsState(rx.State):
                 self.offset).limit(self.items_per_page)
             self.digest_items = session.exec(select_query).all()
 
-    def change_aggregation_interval(self, new_interval: Literal["weekly", "monthly"]):
+    def change_aggregation_interval(self, new_interval: str):
+        assert new_interval in ["weekly", "monthly"]
         self.aggregation_interval = new_interval
         self.load_digests_updates_graph_data()
 
