@@ -6,8 +6,8 @@ WORKDIR /app
 ENV POETRY_VENV="/.poetry"
 RUN python -m venv $POETRY_VENV
 RUN python -m venv $VIRTUAL_ENV
-COPY requirements.txt .
-RUN $POETRY_VENV/bin/pip install --no-cache-dir -r requirements.txt
+COPY requirements-poetry.txt .
+RUN $POETRY_VENV/bin/pip install --no-cache-dir -r requirements-poetry.txt
 COPY pyproject.toml poetry.lock ./
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN $POETRY_VENV/bin/poetry install --no-cache
