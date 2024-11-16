@@ -5,12 +5,14 @@ import os
 import sys
 import time
 from datetime import timedelta, datetime
+from typing import Optional, Tuple
 from zoneinfo import ZoneInfo
 
 import aiohttp
 import durationpy
 import reflex as rx
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
+from docker_registry_client_async.typing import DockerRegistryClientAsyncHeadManifest
 from sqlalchemy.sql import text
 
 import database_update.dockerhub_scraper as dockerhub_scraper
@@ -53,7 +55,8 @@ async def update_popular_images_to_scrape():
 
 async def refresh_digests():
     """
-    Iterates over all ImageToScrape entries and refreshes the digest for each one.
+    Iterates over all ImageToScrape entries and refreshes the digest for each one. Uses batching to speed up the
+    process.
     """
     logger.info("Refreshing digests for all images")
     job_execution = BackgroundJobExecution(started=datetime.now(ZoneInfo('UTC')), successful_queries=0,
@@ -62,40 +65,83 @@ async def refresh_digests():
         await configure_dockerhub_credentials_if_provided(registry_client)
         with rx.session() as session:
             query = ImageToScrape.select()
-            for image_to_scrape in session.exec(query):
-                image_name = ImageName.parse(
-                    f"{image_to_scrape.endpoint}/{image_to_scrape.image}:{image_to_scrape.tag}")
+            images_to_scrape = []
 
+            async def reset_registry_tokens_and_repeat_query_if_tokens_expired(
+                    results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
+                result_indices_with_invalid_token = []
+                for i, res_tuple in enumerate(results):
+                    _img_to_scrape, res = res_tuple
+                    if res is not None and not res.result and res.client_response.status == 401:
+                        result_indices_with_invalid_token.append(i)
+                if result_indices_with_invalid_token:
+                    registry_client.tokens.clear()
+                    for i in result_indices_with_invalid_token:
+                        results[i] = await fetch_digest(results[i][0])
+                        img_to_scrape = results[i][0]
+                        refetched_result = results[i][1]
+                        if refetched_result and refetched_result.client_response.status == 401:
+                            logger.warning(
+                                f"Failed to refresh digest for image "
+                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}', client "
+                                f"token expired, repeating the query again shortly")
+
+            async def fetch_digest(img_to_scrape: ImageToScrape) \
+                    -> Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]:
+                image_name = ImageName.parse(
+                    f"{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}")
                 try:
                     result = await registry_client.head_manifest(image_name)
+                    return img_to_scrape, result
                 except aiohttp.ClientError as e:
-                    job_execution.failed_queries += 1
-                    logging.warning(f"Failed to refresh digest for image '{image_name}': {e}")
-                    continue
+                    logging.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
+                    return img_to_scrape, None
 
-                digest_was_found_in_registry = result.result
-                if digest_was_found_in_registry:
-                    # Add an entry in the database, if the digest of the most recent one is different (or missing)
-                    query = ImageUpdate.select().where(ImageUpdate.image_id == image_to_scrape.id).order_by(
-                        ImageUpdate.scraped_at.desc())
-                    last_update = session.exec(query).first()
-                    if last_update is None or last_update.digest != result.digest:
-                        image_update = ImageUpdate(scraped_at=datetime.now(), image_id=image_to_scrape.id,
-                                                   digest=result.digest)
-                        try:
-                            session.add(image_update)
-                            session.commit()
+            async def process_results(
+                    results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
+                for img_to_scrape, result in results:
+                    if result is None:
+                        job_execution.failed_queries += 1
+                        continue
+
+                    digest_was_found_in_registry = result.result
+                    if digest_was_found_in_registry:
+                        query = ImageUpdate.select().where(ImageUpdate.image_id == img_to_scrape.id).order_by(
+                            ImageUpdate.scraped_at.desc())
+                        last_update = session.exec(query).first()
+                        if last_update is None or last_update.digest != result.digest:
+                            image_update = ImageUpdate(scraped_at=datetime.now(), image_id=img_to_scrape.id,
+                                                       digest=result.digest)
+                            try:
+                                session.add(image_update)
+                                session.commit()
+                                job_execution.successful_queries += 1
+                            except Exception as e:
+                                job_execution.failed_queries += 1
+                                logging.warning(f"Failed to add image scrape update for {image_update}: {e}")
+                        else:
                             job_execution.successful_queries += 1
-                        except Exception as e:
-                            job_execution.failed_queries += 1
-                            logging.warning(f"Failed to add image scrape update for {image_update}: {e}")
                     else:
-                        job_execution.successful_queries += 1
-                else:
-                    job_execution.failed_queries += 1
-                    logger.warning(f"Failed to refresh digest for image '{image_name}', image/tag not found "
-                                   f"in registry! Status code={result.client_response.status}; "
-                                   f"headers={result.client_response.headers}")
+                        job_execution.failed_queries += 1
+                        logger.warning(
+                            f"Failed to refresh digest for image "
+                            f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}', "
+                            f"image/tag not found in registry! Status code={result.client_response.status}; "
+                            f"headers={result.client_response.headers}")
+
+            batch_size = 10
+            for image_to_scrape in session.exec(query):
+                images_to_scrape.append(image_to_scrape)
+                if len(images_to_scrape) == batch_size:
+                    results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
+                    await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
+                    await process_results(results)
+                    images_to_scrape = []
+
+            if images_to_scrape:  # batch size has not been reached, but there are still some images left to process
+                results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
+                await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
+                await process_results(results)
 
             job_execution.completed = datetime.now(ZoneInfo('UTC'))
             try:
