@@ -22,10 +22,12 @@ class ImageToScrape(rx.Model, table=True):
     image: str = sqlmodel.Field(index=True)
     tag: str = sqlmodel.Field(index=True)
     added_at: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now()))
+    last_viewed: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True),
+                                                               server_default=sa.func.now()))
 
 
 class ImageUpdate(rx.Model, table=True):
     __tablename__ = "image_update"
     scraped_at: datetime
-    image_id: int = sqlmodel.Field(foreign_key="image_to_scrape.id", index=True)
+    image_id: int = sqlmodel.Field(foreign_key="image_to_scrape.id", index=True, ondelete="CASCADE")
     digest: str

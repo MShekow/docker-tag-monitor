@@ -1,6 +1,8 @@
 import re
 import time
-from typing import Optional, Literal
+from datetime import datetime
+from typing import Optional
+from zoneinfo import ZoneInfo
 
 import reflex as rx
 import requests
@@ -12,7 +14,7 @@ from sqlmodel import select, func, col
 from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, format_graph_labels, ImageToScrapeWithCount, \
     DailyScanSummary, DailyScanDuration
 from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS, \
-    MAX_DAILY_SCAN_ENTRIES_IN_GRAPH
+    MAX_DAILY_SCAN_ENTRIES_IN_GRAPH, IMAGE_LAST_VIEWED_UPDATE_THRESHOLD
 from .models import ImageToScrape, ImageUpdate
 
 
@@ -321,6 +323,13 @@ class ImageDetailsState(rx.State):
                 if self.total_items == 0:
                     self.not_found = True
                     return
+
+                now = datetime.now(ZoneInfo('UTC'))
+                last_viewed_age = now - self.image_to_scrape.last_viewed
+                if last_viewed_age > IMAGE_LAST_VIEWED_UPDATE_THRESHOLD:
+                    self.image_to_scrape.last_viewed = now
+                    session.add(self.image_to_scrape)
+                    session.commit()
 
                 self.load_digests_updates_graph_data()
 
