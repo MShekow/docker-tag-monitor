@@ -94,7 +94,8 @@ async def refresh_digests():
                 else:
                     job_execution.failed_queries += 1
                     logger.warning(f"Failed to refresh digest for image '{image_name}', image/tag not found "
-                                   "in registry!")
+                                   f"in registry! Status code={result.client_response.status}; "
+                                   f"headers={result.client_response.headers}")
 
             job_execution.completed = datetime.now(ZoneInfo('UTC'))
             try:
