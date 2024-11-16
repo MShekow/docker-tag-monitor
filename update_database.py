@@ -14,6 +14,7 @@ import reflex as rx
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from docker_registry_client_async.typing import DockerRegistryClientAsyncHeadManifest
 from sqlalchemy.sql import text
+from sqlmodel import delete, select, func
 
 import database_update.dockerhub_scraper as dockerhub_scraper
 from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution
@@ -23,7 +24,7 @@ logger = logging.getLogger("DatabaseUpdater")
 
 # TODO: delete ImageToScrape (and ImageUpdate) entries for images that do no longer exist
 
-# TODO: delete ImageUpdate entries that are over a certain age
+# TODO: Figure out whether we have to do ratelimit detection and insert extra waits
 
 async def update_popular_images_to_scrape():
     popular_images = await dockerhub_scraper.get_popular_images()
@@ -155,6 +156,26 @@ async def refresh_digests():
                 f"{job_execution.failed_queries} failed queries")
 
 
+async def delete_old_images(image_update_max_age: timedelta, image_last_accessed_max_age: timedelta):
+    image_update_cutoff_date = datetime.now(ZoneInfo('UTC')) - image_update_max_age
+    image_cutoff_date = datetime.now(ZoneInfo('UTC')) - image_last_accessed_max_age
+    with rx.session() as session:
+        outdated_images_count = session.exec(
+            select(func.count()).select_from(ImageToScrape).where(ImageToScrape.last_viewed < image_cutoff_date)).one()
+        session.exec(delete(ImageToScrape).where(ImageToScrape.last_viewed < image_cutoff_date))
+
+        outdated_image_updates_count = session.exec(
+            select(func.count()).select_from(ImageUpdate).where(
+                ImageUpdate.scraped_at < image_update_cutoff_date)).one()
+        session.exec(delete(ImageUpdate).where(ImageUpdate.scraped_at < image_update_cutoff_date))
+
+        if outdated_images_count or outdated_image_updates_count:
+            logger.info(f"Deleted {outdated_images_count} outdated ImageToScrape entries and "
+                        f"{outdated_image_updates_count} outdated ImageUpdate entries")
+
+        session.commit()
+
+
 async def configure_dockerhub_credentials_if_provided(registry_client: DockerRegistryClientAsync):
     username = os.getenv("DOCKERHUB_USERNAME")
     password = os.getenv("DOCKERHUB_PASSWORD")
@@ -175,8 +196,11 @@ async def main():
 
     image_refresh_interval = durationpy.from_str(os.getenv("IMAGE_REFRESH_INTERVAL", "1d"))
     digest_refresh_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_INTERVAL", "1h"))
+    image_update_max_age = durationpy.from_str(os.getenv("IMAGE_UPDATE_MAX_AGE", "1y"))
+    image_last_accessed_max_age = durationpy.from_str(os.getenv("IMAGE_LAST_ACCESSED_MAX_AGE", "2y"))
 
     while True:
+        await delete_old_images(image_update_max_age, image_last_accessed_max_age)
         now = time.monotonic()
         if (now - last_image_refresh_timestamp) > image_refresh_interval.total_seconds():
             await update_popular_images_to_scrape()
