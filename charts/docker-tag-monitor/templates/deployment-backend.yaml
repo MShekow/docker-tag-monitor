@@ -40,7 +40,7 @@ spec:
             - name: DB_URL
               value: "postgresql+psycopg://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
             - name: REDIS_URL
-              value: "redis://{{ .Release.Name }}-valkey-master:6379"
+              value: "redis://{{ .Release.Name }}-valkey-primary:6379"
             - name: GUNICORN_WORKERS
               value: "{{ .Values.backend.processesPerReplica }}"
           ports:
