@@ -14,4 +14,4 @@ dependencies:
     version: 16.0.1
   - name: valkey
     repository: oci://registry-1.docker.io/bitnamicharts
-    version: 1.0.2
+    version: 2.0.2
