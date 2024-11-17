@@ -313,12 +313,8 @@ class ImageDetailsState(rx.State):
 
                 self.image_to_scrape = image_to_scrape
 
-                # print(f"ID: {self.image_to_scrape.id}")
                 count_query = select(func.count(ImageUpdate.id)).where(ImageUpdate.image_id == self.image_to_scrape.id)
-                # print(count_query)
                 self.total_items = session.exec(count_query).one()
-
-                # print(f"Total items: {self.total_items}")
 
                 if self.total_items == 0:
                     self.not_found = True
