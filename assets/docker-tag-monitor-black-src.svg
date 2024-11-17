@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="136.29225mm"
+   height="23.031836mm"
+   viewBox="0 0 136.29225 23.031836"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   sodipodi:docname="docker-tag-monitor-black.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="true"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.0255231"
+     inkscape:cx="224.76334"
+     inkscape:cy="45.830269"
+     inkscape:window-width="1920"
+     inkscape:window-height="1010"
+     inkscape:window-x="-6"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-11.347683,-88.177145)">
+    <text
+       xml:space="preserve"
+       style="font-size:12.2208px;font-family:Inter;-inkscape-font-specification:Inter;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.814723;paint-order:markers fill stroke"
+       x="37.397324"
+       y="102.88849"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Inter;-inkscape-font-specification:Inter;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.814723"
+         x="37.397324"
+         y="102.88849">Docker Tag Monitor</tspan></text>
+    <path
+       d="m 34.110714,109.57688 -2.43856,-2.43856 c 0.49923,-0.75844 0.79685,-1.6705 0.79685,-2.64976 0,-2.64977 -2.15053,-4.800295 -4.8003,-4.800295 -2.64976,0 -4.8003,2.150525 -4.8003,4.800295 0,2.64976 2.15054,4.8003 4.8003,4.8003 0.97926,0 1.89132,-0.29762 2.64977,-0.79685 l 2.43855,2.43855 c 0.19201,0.19201 0.43203,0.27842 0.68164,0.27842 0.24962,0 0.48964,-0.096 0.68165,-0.27842 0.37442,-0.37442 0.37442,-0.97926 0,-1.35368 z m -9.32219,-5.07872 c 0,-1.5841 1.29608,-2.88018 2.88018,-2.88018 1.5841,0 2.88018,1.29608 2.88018,2.88018 0,1.5841 -1.29608,2.88018 -2.88018,2.88018 -1.5841,0 -2.88018,-1.29608 -2.88018,-2.88018 z m -2.88018,3.84024 c 0,0.52803 -0.43203,0.96006 -0.96006,0.96006 h -4.8003 c -2.649766,0 -4.800301,-2.15053 -4.800301,-4.8003 V 92.977445 c 0,-2.64977 2.150535,-4.8003 4.800301,-4.8003 h 11.52072 c 2.64977,0 4.8003,2.15053 4.8003,4.8003 v 4.8003 c 0,0.52803 -0.43202,0.96006 -0.96006,0.96006 -0.52803,0 -0.96006,-0.43203 -0.96006,-0.96006 v -4.8003 c 0,-1.5841 -1.29608,-2.88018 -2.88018,-2.88018 h -11.52072 c -1.584099,0 -2.88018,1.29608 -2.88018,2.88018 v 11.520715 c 0,1.5841 1.296081,2.88018 2.88018,2.88018 h 4.8003 c 0.52803,0 0.96006,0.43203 0.96006,0.96006 z"
+       id="path1"
+       style="stroke-width:0.960059"
+       sodipodi:nodetypes="ccsssscsscccssssssssssssssssssssssss" />
+    <path
+       d="m 15.746359,96.79667 4.085426,-4.085423 4.287184,0.586048 0.473436,4.280609 -4.229005,4.228546 c -0.244458,0.24445 -0.569153,0.37912 -0.914963,0.37912 -0.345809,0 -0.670971,-0.13467 -0.920596,-0.38429 l -2.929754,-3.025941 c -0.959611,-0.739193 -0.47229,-1.284005 0.148272,-1.978669 z m 6.477964,-1.180067 c 0.259005,0 0.469213,-0.210208 0.469213,-0.469215 0,-0.258995 -0.210208,-0.469202 -0.469213,-0.469202 -0.259004,0 -0.469213,0.210207 -0.469213,0.469202 0,0.259007 0.210209,0.469215 0.469213,0.469215 z"
+       id="path1-9"
+       style="stroke-width:0.469213"
+       sodipodi:nodetypes="cccccscccsssss" />
+  </g>
+</svg>
