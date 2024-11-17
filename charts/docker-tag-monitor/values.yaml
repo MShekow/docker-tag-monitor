@@ -20,7 +20,7 @@ frontend:
     repository: mshekow/docker-tag-monitor-frontend
     # defaults to the chart appVersion
     tag: ""
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 backend:
   replicaCount: 1
@@ -38,7 +38,7 @@ backend:
     repository: mshekow/docker-tag-monitor-backend
     # defaults to the chart appVersion
     tag: ""
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 
 # This is for the secretes for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
