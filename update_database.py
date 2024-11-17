@@ -131,9 +131,9 @@ async def refresh_digests():
                                             f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
                                             f"because it is no longer found in the registry")
                             except Exception as e:
-                                logger.info(f"Unable to delete ImageToScrape "
-                                            f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
-                                            f"from the registry (image is no longer found in the registry): {e}")
+                                logger.warning(f"Unable to delete ImageToScrape "
+                                               f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
+                                               f"from the registry (image is no longer found in the registry): {e}")
 
             batch_size = 10
             for image_to_scrape in session.exec(query):
