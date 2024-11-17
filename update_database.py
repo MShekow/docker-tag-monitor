@@ -21,6 +21,7 @@ from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobE
 
 logger = logging.getLogger("DatabaseUpdater")
 
+
 # TODO: Figure out whether we have to do ratelimit detection and insert extra waits
 
 async def update_popular_images_to_scrape():
@@ -109,8 +110,7 @@ async def refresh_digests():
                             ImageUpdate.scraped_at.desc())
                         last_update = session.exec(query).first()
                         if last_update is None or last_update.digest != result.digest:
-                            image_update = ImageUpdate(scraped_at=datetime.now(), image_id=img_to_scrape.id,
-                                                       digest=result.digest)
+                            image_update = ImageUpdate(image_id=img_to_scrape.id, digest=result.digest)
                             try:
                                 session.add(image_update)
                                 session.commit()
@@ -205,7 +205,6 @@ async def main():
     image_last_accessed_max_age = durationpy.from_str(os.getenv("IMAGE_LAST_ACCESSED_MAX_AGE", "2y"))
 
     while True:
-        await delete_old_images(image_update_max_age, image_last_accessed_max_age)
         now = time.monotonic()
         if (now - last_image_refresh_timestamp) > image_refresh_interval.total_seconds():
             await update_popular_images_to_scrape()
@@ -213,10 +212,12 @@ async def main():
 
         now = time.monotonic()
         if (now - last_digest_refresh_timestamp) > digest_refresh_interval.total_seconds():
+            await delete_old_images(image_update_max_age, image_last_accessed_max_age)
+            digest_refresh_start = time.monotonic()
             await refresh_digests()
             last_digest_refresh_timestamp = time.monotonic()
 
-            digest_refresh_duration = timedelta(seconds=time.monotonic() - now)
+            digest_refresh_duration = timedelta(seconds=last_digest_refresh_timestamp - digest_refresh_start)
             if digest_refresh_duration > digest_refresh_interval:
                 logger.warning(f"Digest refresh took longer than the interval - some optimizations are required "
                                f"(duration: {digest_refresh_duration}")

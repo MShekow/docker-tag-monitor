@@ -7,8 +7,8 @@ import sqlmodel
 
 class BackgroundJobExecution(rx.Model, table=True):
     __tablename__ = "background_job_execution"
-    started: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
-    completed: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
+    started: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False, index=True))
+    completed: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False, index=True))
     successful_queries: int
     failed_queries: int
 
@@ -21,13 +21,15 @@ class ImageToScrape(rx.Model, table=True):
     endpoint: str = sqlmodel.Field(index=True)
     image: str = sqlmodel.Field(index=True)
     tag: str = sqlmodel.Field(index=True)
-    added_at: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now()))
+    added_at: datetime = sqlmodel.Field(
+        sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now(), index=True))
     last_viewed: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True),
-                                                               server_default=sa.func.now()))
+                                                               server_default=sa.func.now(), index=True))
 
 
 class ImageUpdate(rx.Model, table=True):
     __tablename__ = "image_update"
-    scraped_at: datetime
+    scraped_at: datetime = sqlmodel.Field(
+        sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now(), index=True))
     image_id: int = sqlmodel.Field(foreign_key="image_to_scrape.id", index=True, ondelete="CASCADE")
     digest: str
