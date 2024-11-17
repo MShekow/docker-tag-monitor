@@ -184,6 +184,8 @@ async def delete_old_images(image_update_max_age: timedelta, image_last_accessed
 async def configure_dockerhub_credentials_if_provided(registry_client: DockerRegistryClientAsync):
     username = os.getenv("DOCKERHUB_USERNAME")
     password = os.getenv("DOCKERHUB_PASSWORD")
+    # Note: from various experiments, since we just perform HEAD requests to Docker Hub, it seems that there is no
+    # ratelimit-related difference between using an account, or being anonymous
     if username and password:
         b64_credentials = base64.b64encode(f"{username}:{password}".encode("ascii")).decode("ascii")
         await registry_client.add_credentials(credentials=b64_credentials, endpoint="https://index.docker.io/")
@@ -200,9 +202,22 @@ async def main():
     last_digest_refresh_timestamp = -999999999
 
     image_refresh_interval = durationpy.from_str(os.getenv("IMAGE_REFRESH_INTERVAL", "1d"))
+    """
+    How often to update the ImageToScrape table with new "popular" images from Docker Hub.
+    """
     digest_refresh_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_INTERVAL", "1h"))
+    """
+    How often to check for digest changes for all ImageToScrape entries.
+    """
     image_update_max_age = durationpy.from_str(os.getenv("IMAGE_UPDATE_MAX_AGE", "1y"))
+    """
+    Retention period of ImageUpdate entries (entries older than this will be automatically deleted)
+    """
     image_last_accessed_max_age = durationpy.from_str(os.getenv("IMAGE_LAST_ACCESSED_MAX_AGE", "2y"))
+    """
+    Retention period of ImageToScrape entries: entries whose last access is older than this configured interval 
+    will be automatically deleted.
+    """
 
     while True:
         now = time.monotonic()
