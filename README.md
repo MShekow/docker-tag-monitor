@@ -1,16 +1,16 @@
 # Docker Tag Monitor
 
-Docker Tag Monitor is a web service that tells you how often a Docker/OCI image has changed over time (assuming that it has been monitoring the image/tag for a while).
+Docker Tag Monitor is a web service that tells you how often a Docker/OCI image has changed over time (assuming that _Docker Tag Monitor_ has been monitoring the image/tag for a while).
 
-You can use hosted version https://docker-tag-monitor.augmentedmind.de/ or host it yourself with Docker compose or Kubernetes.
+You can use a hosted version https://docker-tag-monitor.augmentedmind.de/ or host it yourself with Docker compose or Kubernetes.
 
 ## Background
 
-Registries such as Docker Hub do _not_ store or expose how often a specific image/tag has changed. Given a specific tag, you can merely look up the _age_ of the most recent push. But a small number, e.g. "1 day", is _not_ a good indicator for the update frequency of an image. The maintainers might update an image tag only twice a _year_, and coincidentally the last updated happened to be 1 day ago.
+Registries such as Docker Hub do _not_ store or expose how often a specific image/tag has changed. Given a specific tag, you can merely look up the _age_ of the most recent push. But a small age, e.g. "1 day", is _not_ a good indicator for the update frequency of an image. The maintainers might update an image tag only twice a _year_, and coincidentally the last update happened to be 1 day ago.
 
 However, the rebuild frequency of image version tags _should_ be one of your evaluation criteria when choosing (base) images, so that's why _Docker Tag Monitor_ was created.
 
-See this blog post (TODO) for more details.
+See this [blog post](https://www.augmentedmind.de/2024/11/24/docker-image-version-tag-updates/) for more details and how to use _Docker Tag Monitor_.
 
 ## Used components
 
@@ -35,7 +35,7 @@ Using the `pip` of the Poetry venv, install Poetry via `pip install -r requireme
 
 Then, run `poetry install`, but make sure that either no venv is active, or the `.venv` one, but **not** the `.poetry` one (otherwise Poetry would stupidly install the dependencies into that one).
 
-### Usage
+### Updating dependencies
 
 - When dependencies changed **from the outside**, e.g. because Renovate updated the `pyproject.toml` and `poetry.lock` file, run `poetry install --sync` to update the local environment, where `--sync` removes any obsolete dependencies from the `.venv` venv.
 - If **you** updated a dependency in `pyproject.toml`, run `poetry update` to update the lock file and the local environment.
