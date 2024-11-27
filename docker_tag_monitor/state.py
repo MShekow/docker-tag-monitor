@@ -187,7 +187,7 @@ class ImageDetailsState(rx.State):
     def load_digest_table_data_for_page(self):
         with rx.session() as session:
             select_query = ImageUpdate.select().where(ImageUpdate.image_id == self.image_to_scrape.id).offset(
-                self.offset).limit(self.items_per_page)
+                self.offset).limit(self.items_per_page).order_by(ImageUpdate.scraped_at.desc())
             self.digest_items = session.exec(select_query).all()
 
     def change_aggregation_interval(self, new_interval: str):
