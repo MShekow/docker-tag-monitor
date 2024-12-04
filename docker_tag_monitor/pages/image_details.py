@@ -66,6 +66,11 @@ def index() -> rx.Component:
                             rx.data_list.value(ImageDetailsState.image_to_scrape.tag),
                             align="center",
                         ),
+                        rx.data_list.item(
+                            rx.data_list.label("Monitored since"),
+                            rx.data_list.value(ImageDetailsState.image_to_scrape.added_at),
+                            align="center",
+                        ),
                     ),
                 ),
                 ),
