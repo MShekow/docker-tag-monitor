@@ -432,10 +432,11 @@ class SearchState(rx.State):
             return
 
         with rx.session() as session:
-            # TODO: better image search by replacing image_name.resolve_image() with image_name.image?
+            # Note: we use image_name.image (instead of resolve_image()) because the latter would turn "foo"
+            # to "library/foo" and thus the search would fail to find (existing) images such as "library/afoo"
             query = select(ImageToScrape).where(
                 col(ImageToScrape.endpoint).contains(image_name.resolve_endpoint()),
-                col(ImageToScrape.image).contains(image_name.resolve_image()),
+                col(ImageToScrape.image).contains(image_name.image),
             )
 
             if image_name.tag:
