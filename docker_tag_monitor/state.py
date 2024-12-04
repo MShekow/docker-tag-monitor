@@ -1,5 +1,6 @@
 import re
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -7,7 +8,7 @@ from zoneinfo import ZoneInfo
 import reflex as rx
 import requests
 from dateutil.relativedelta import relativedelta
-from docker_registry_client_async import ImageName, DockerRegistryClientAsync
+from docker_registry_client_async import ImageName
 from sqlalchemy import text
 from sqlmodel import select, func, col
 
@@ -16,6 +17,7 @@ from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, forma
 from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS, \
     MAX_DAILY_SCAN_ENTRIES_IN_GRAPH, IMAGE_LAST_VIEWED_UPDATE_THRESHOLD
 from .models import ImageToScrape, ImageUpdate
+from .utils import images_exists_in_registry, add_selected_tags_to_monitoring_db, get_additional_image_tags_to_monitor
 
 
 class OverviewTableState(rx.State):
@@ -119,15 +121,6 @@ def validate_image_name(image_name: ImageName):
     if image_name.image:
         if not bool(IMAGE_PATTERN.fullmatch(image_name.image)):
             raise ValueError(f"Invalid image format: {image_name.image}")
-
-
-async def image_exists_in_registry(image_name: ImageName) -> bool:
-    async with DockerRegistryClientAsync() as registry_client:
-        try:
-            result = await registry_client.head_manifest(image_name)
-            return result.result
-        except Exception as e:
-            return False
 
 
 POSTGRESQL_AGGREGATION_INTERVALS = {  # maps the "aggregation_interval" from the UI to the PostgreSQL interval
@@ -265,6 +258,9 @@ class ImageDetailsState(rx.State):
         self._digest_updates_aggregated.clear()
         self.digest_updates_graph_data.clear()
 
+        add_additional_tag_state: AddAdditionalTagsState = await self.get_state(AddAdditionalTagsState)
+        add_additional_tag_state.reset()
+
         yield  # send the update to the UI immediately(!)
 
         try:
@@ -293,7 +289,7 @@ class ImageDetailsState(rx.State):
                                                      ImageToScrape.tag == resolved_tag)
                 image_to_scrape: Optional[ImageToScrape] = session.exec(query).first()
                 if image_to_scrape is None:
-                    if not await image_exists_in_registry(image_name):
+                    if not await images_exists_in_registry([image_name]):
                         self.non_existent_image = True
                         return
 
@@ -334,6 +330,81 @@ class ImageDetailsState(rx.State):
             self.loading = False
 
 
+@dataclass
+class ImageTagField:
+    tag: str
+    can_add_to_monitoring_db: bool
+    # checked: bool
+
+
+class AddAdditionalTagsState(rx.State):
+    view_state: str = "show_button"  # alternatives: "show_form", "show_result"
+    loading: bool = False
+    image_tag_fields: list[ImageTagField] = []
+    search_string: str = ""
+    error: str = ""
+
+    @rx.event
+    async def load_additional_tags(self):
+        self.loading = True
+        yield  # immediately update the UI
+
+        image_details_state: ImageDetailsState = await self.get_state(ImageDetailsState)
+        image_name = ImageName.parse(f"{image_details_state.image_to_scrape.endpoint}/"
+                                     f"{image_details_state.image_to_scrape.image}:"
+                                     f"{image_details_state.image_to_scrape.tag}")
+        try:
+            image_tag_fields = await get_additional_image_tags_to_monitor(image_name, name_filter=self.search_string)
+            self.image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1])
+                                     for itf in image_tag_fields]
+            self.view_state = "show_form"
+        except ValueError as e:
+            self.error = str(e)
+            self.image_tag_fields.clear()
+
+        self.loading = False
+
+    @rx.event
+    async def handle_submit(self, form_data: dict):
+        # Format of form data: e.g. {'2': 'on', '3': 'on'} (contains only entries for which the checkbox was clicked)
+        selected_additional_tags = [key for key, value in form_data.items()]
+        self.loading = True
+
+        yield
+
+        image_details_state: ImageDetailsState = await self.get_state(ImageDetailsState)
+
+        image_name = ImageName.parse(f"{image_details_state.image_to_scrape.endpoint}/"
+                                     f"{image_details_state.image_to_scrape.image}:"
+                                     f"{image_details_state.image_to_scrape.tag}")
+
+        try:
+            await add_selected_tags_to_monitoring_db(image_name, selected_additional_tags)
+        except ValueError as e:
+            self.error = str(e)
+
+        self.view_state = "show_result"
+
+    @rx.event
+    async def clear_search(self):
+        self.search_string = ""
+        return AddAdditionalTagsState.load_additional_tags
+
+    @rx.event
+    async def validate_and_search(self, search_term: str):
+        self.search_string = search_term
+        return AddAdditionalTagsState.load_additional_tags
+
+    # Doesn't work
+    # @rx.event
+    # async def on_check_all(self, checked: bool):
+    #     pass
+    #
+    # @rx.event
+    # async def set_checkbox(self, index: int, checked: bool):
+    #     self.image_tag_fields[index].checked = checked
+
+
 class SearchState(rx.State):
     search_string: str = ""
     error: bool = False
@@ -361,6 +432,7 @@ class SearchState(rx.State):
             return
 
         with rx.session() as session:
+            # TODO: better image search by replacing image_name.resolve_image() with image_name.image?
             query = select(ImageToScrape).where(
                 col(ImageToScrape.endpoint).contains(image_name.resolve_endpoint()),
                 col(ImageToScrape.image).contains(image_name.resolve_image()),
@@ -468,7 +540,7 @@ class StatusState(rx.State):
             for row in session.exec(scan_duration_query, params={"limit": MAX_DAILY_SCAN_ENTRIES_IN_GRAPH}):
                 # Note: row[0] is a date object representing the day, row[1] is the
                 # duration (seconds) returned as Decimal object, which we need to convert to float
-                daily_scan_duration = DailyScanDuration(date=str(row[0]), duration_minutes=float(row[1]/60))
+                daily_scan_duration = DailyScanDuration(date=str(row[0]), duration_minutes=float(row[1] / 60))
                 self.daily_scan_duration_graph_data.append(daily_scan_duration)
 
         self.daily_scan_summary_graph_data.reverse()

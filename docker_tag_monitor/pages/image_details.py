@@ -1,5 +1,6 @@
 import reflex as rx
 
+from ..components.add_image_tags_form import add_image_tags_form
 from ..components.digests_graph import digests_graph
 from ..components.digests_table import digests_table
 from ..main_template import template
@@ -67,6 +68,9 @@ def index() -> rx.Component:
                         ),
                     ),
                 ),
+                ),
+        rx.cond(~ImageDetailsState.loading & (ImageDetailsState.image_to_scrape | ImageDetailsState.not_found),
+                add_image_tags_form()
                 ),
         rx.cond(ImageDetailsState.digest_updates_graph_data, digests_graph()),
         rx.cond(ImageDetailsState.digest_items, digests_table()),
