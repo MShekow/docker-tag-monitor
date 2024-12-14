@@ -12,7 +12,7 @@ COPY pyproject.toml poetry.lock ./
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN $POETRY_VENV/bin/poetry install --no-cache
 # Download Node.js
-RUN reflex init
+RUN reflex init --template blank
 COPY . .
 # Note: we also remove the largest folders inside the .web folder, because we don't need them in backend image
 RUN reflex export --frontend-only --no-zip && rm -rf .web/node_modules .web/.next
