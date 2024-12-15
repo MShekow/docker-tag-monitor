@@ -16,35 +16,36 @@ def _form_component() -> rx.Component:
                         display=rx.cond(AddAdditionalTagsState.search_string, "flex", "none"),
                     ),
                     value=AddAdditionalTagsState.search_string,
-                    placeholder="Search for tag",
+                    placeholder="Search for tags, glob-syntax (* and ?) is supported, e.g. '5.0.*'",
                     size="3",
                     width="100%",
                     variant="surface",
                     color_scheme="gray",
                     on_change=AddAdditionalTagsState.validate_and_search,
                 ), debounce_timeout=500),
-            # rx.checkbox(text="Check / uncheck all", default_checked=True, disabled=AddAdditionalTagsState.loading,
-            #             on_change=AddAdditionalTagsState.on_check_all),  does not work :-/
             rx.form.root(
                 rx.vstack(
                     rx.text("Please choose which of the following additional tags to add:"),
                     rx.checkbox(text="Select / unselect all", name="check_all",
                                 checked=AddAdditionalTagsState.select_unselect_all_checked,
                                 on_change=AddAdditionalTagsState.on_check_all),
-                    rx.foreach(AddAdditionalTagsState.image_tag_fields,
+                    rx.foreach(AddAdditionalTagsState.shown_image_tag_fields,
                                lambda field, idx: rx.hstack(
                                    rx.checkbox(text=field.tag, name=field.tag,
-                                               checked=AddAdditionalTagsState.image_tag_fields[idx].checked,
+                                               checked=AddAdditionalTagsState.shown_image_tag_fields[idx].checked,
                                                disabled=AddAdditionalTagsState.loading | ~
-                                               AddAdditionalTagsState.image_tag_fields[idx].can_add_to_monitoring_db,
+                                               AddAdditionalTagsState.shown_image_tag_fields[idx].can_add_to_monitoring_db,
                                                on_change=lambda checked: AddAdditionalTagsState.set_checkbox(idx,
                                                                                                              checked)
                                                ),
-                                   rx.cond(~AddAdditionalTagsState.image_tag_fields[idx].can_add_to_monitoring_db,
+                                   rx.cond(~AddAdditionalTagsState.shown_image_tag_fields[idx].can_add_to_monitoring_db,
                                            rx.tooltip(rx.icon("circle-help", size=18),
                                                       content="This tag is already monitored"))
                                )
                                ),
+                    rx.cond(AddAdditionalTagsState.extra_search_result_count > 0,
+                            rx.text("There are ", AddAdditionalTagsState.extra_search_result_count,
+                                    " additional tags, use the search to find more specific tags")),
                     rx.button("Add selected version tags",
                               rx.cond(AddAdditionalTagsState.loading, rx.spinner()),
                               type="submit",

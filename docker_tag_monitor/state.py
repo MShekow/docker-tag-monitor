@@ -1,3 +1,4 @@
+import fnmatch
 import re
 import time
 from datetime import datetime
@@ -16,7 +17,8 @@ from .components.utils import ImageUpdateAggregated, ImageUpdateGraphData, forma
 from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS, \
     MAX_DAILY_SCAN_ENTRIES_IN_GRAPH, IMAGE_LAST_VIEWED_UPDATE_THRESHOLD
 from .models import ImageToScrape, ImageUpdate
-from .utils import images_exists_in_registry, add_selected_tags_to_monitoring_db, get_additional_image_tags_to_monitor
+from .utils import images_exists_in_registry, add_selected_tags_to_monitoring_db, get_additional_image_tags_to_monitor, \
+    TAGS_PER_IMAGE_MAX_COUNT
 
 
 class OverviewTableState(rx.State):
@@ -338,8 +340,10 @@ class ImageTagField(rx.Base):
 class AddAdditionalTagsState(rx.State):
     view_state: str = "show_button"  # alternatives: "show_form", "show_result"
     loading: bool = False
-    image_tag_fields: rx.Field[list[ImageTagField]] = rx.field([])
+    _image_tags: rx.Field[list[tuple[str, bool]]] = rx.field([])
+    shown_image_tag_fields: rx.Field[list[ImageTagField]] = rx.field([])
     select_unselect_all_checked: bool = True
+    extra_search_result_count: int = 0
     search_string: str = ""
     error: str = ""
 
@@ -348,24 +352,40 @@ class AddAdditionalTagsState(rx.State):
         self.loading = True
         yield  # immediately update the UI
 
-        image_details_state: ImageDetailsState = await self.get_state(ImageDetailsState)
-        image_name = ImageName.parse(f"{image_details_state.image_to_scrape.endpoint}/"
-                                     f"{image_details_state.image_to_scrape.image}:"
-                                     f"{image_details_state.image_to_scrape.tag}")
-        try:
-            image_tag_fields = await get_additional_image_tags_to_monitor(image_name, name_filter=self.search_string)
-            self.image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1], checked=True)
-                                     for itf in image_tag_fields]
-            self.view_state = "show_form"
-        except ValueError as e:
-            self.error = str(e)
-            self.image_tag_fields.clear()
+        if not self._image_tags:
+            image_details_state: ImageDetailsState = await self.get_state(ImageDetailsState)
+            image_name = ImageName.parse(f"{image_details_state.image_to_scrape.endpoint}/"
+                                         f"{image_details_state.image_to_scrape.image}:"
+                                         f"{image_details_state.image_to_scrape.tag}")
+            try:
+                self._image_tags = await get_additional_image_tags_to_monitor(image_name)
+                self.view_state = "show_form"
+            except ValueError as e:
+                self.error = str(e)
+                self._image_tags.clear()
+
+        if self.search_string:
+            if '*' in self.search_string or '?' in self.search_string:
+
+                matching_image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1], checked=True)
+                                             for itf in self._image_tags if
+                                             fnmatch.fnmatch(itf[0], self.search_string)]
+            else:
+                matching_image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1], checked=True)
+                                             for itf in self._image_tags if self.search_string in itf[0]]
+
+            self.shown_image_tag_fields = matching_image_tag_fields[:TAGS_PER_IMAGE_MAX_COUNT]
+            self.extra_search_result_count = max(0, len(matching_image_tag_fields) - TAGS_PER_IMAGE_MAX_COUNT)
+        else:
+            self.shown_image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1], checked=True)
+                                           for itf in self._image_tags[:TAGS_PER_IMAGE_MAX_COUNT]]
+            self.extra_search_result_count = max(0, len(self._image_tags) - TAGS_PER_IMAGE_MAX_COUNT)
 
         self.loading = False
 
     @rx.event
     async def handle_submit(self, _form_data: dict):
-        selected_additional_tags = [itf.tag for itf in self.image_tag_fields if
+        selected_additional_tags = [itf.tag for itf in self.shown_image_tag_fields if
                                     itf.checked and itf.can_add_to_monitoring_db]
         self.loading = True
 
@@ -397,15 +417,15 @@ class AddAdditionalTagsState(rx.State):
     @rx.event
     async def on_check_all(self, checked: bool):
         self.select_unselect_all_checked = checked
-        for itf in self.image_tag_fields:
+        for itf in self.shown_image_tag_fields:
             if itf.can_add_to_monitoring_db:
                 itf.checked = checked
 
     @rx.event
     async def set_checkbox(self, index: int, checked: bool):
-        self.image_tag_fields[index].checked = checked
+        self.shown_image_tag_fields[index].checked = checked
         # If all checkboxes are ticked, also set selected_additional_tags to True
-        self.select_unselect_all_checked = all([itf.checked for itf in self.image_tag_fields])
+        self.select_unselect_all_checked = all([itf.checked for itf in self.shown_image_tag_fields])
 
 
 class SearchState(rx.State):
