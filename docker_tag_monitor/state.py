@@ -339,6 +339,7 @@ class AddAdditionalTagsState(rx.State):
     view_state: str = "show_button"  # alternatives: "show_form", "show_result"
     loading: bool = False
     image_tag_fields: rx.Field[list[ImageTagField]] = rx.field([])
+    select_unselect_all_checked: bool = True
     search_string: str = ""
     error: str = ""
 
@@ -353,7 +354,7 @@ class AddAdditionalTagsState(rx.State):
                                      f"{image_details_state.image_to_scrape.tag}")
         try:
             image_tag_fields = await get_additional_image_tags_to_monitor(image_name, name_filter=self.search_string)
-            self.image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1])
+            self.image_tag_fields = [ImageTagField(tag=itf[0], can_add_to_monitoring_db=itf[1], checked=True)
                                      for itf in image_tag_fields]
             self.view_state = "show_form"
         except ValueError as e:
@@ -363,9 +364,9 @@ class AddAdditionalTagsState(rx.State):
         self.loading = False
 
     @rx.event
-    async def handle_submit(self, form_data: dict):
-        # Format of form data: e.g. {'2': 'on', '3': 'on'} (contains only entries for which the checkbox was clicked)
-        selected_additional_tags = [key for key, value in form_data.items()]
+    async def handle_submit(self, _form_data: dict):
+        selected_additional_tags = [itf.tag for itf in self.image_tag_fields if
+                                    itf.checked and itf.can_add_to_monitoring_db]
         self.loading = True
 
         yield
@@ -393,14 +394,18 @@ class AddAdditionalTagsState(rx.State):
         self.search_string = search_term
         return AddAdditionalTagsState.load_additional_tags
 
-    # Doesn't work
-    # @rx.event
-    # async def on_check_all(self, checked: bool):
-    #     pass
-    #
-    # @rx.event
-    # async def set_checkbox(self, index: int, checked: bool):
-    #     self.image_tag_fields[index].checked = checked
+    @rx.event
+    async def on_check_all(self, checked: bool):
+        self.select_unselect_all_checked = checked
+        for itf in self.image_tag_fields:
+            if itf.can_add_to_monitoring_db:
+                itf.checked = checked
+
+    @rx.event
+    async def set_checkbox(self, index: int, checked: bool):
+        self.image_tag_fields[index].checked = checked
+        # If all checkboxes are ticked, also set selected_additional_tags to True
+        self.select_unselect_all_checked = all([itf.checked for itf in self.image_tag_fields])
 
 
 class SearchState(rx.State):
@@ -483,8 +488,8 @@ class NavbarState(rx.State):
 
 
 class StatusState(rx.State):
-    daily_scan_summary_graph_data: rx.Field[list[DailyScanSummary]] =  rx.field([])
-    daily_scan_duration_graph_data: rx.Field[list[DailyScanDuration]] =  rx.field([])
+    daily_scan_summary_graph_data: rx.Field[list[DailyScanSummary]] = rx.field([])
+    daily_scan_duration_graph_data: rx.Field[list[DailyScanDuration]] = rx.field([])
 
     def load_data(self):
         self.daily_scan_summary_graph_data.clear()

@@ -28,15 +28,17 @@ def _form_component() -> rx.Component:
             rx.form.root(
                 rx.vstack(
                     rx.text("Please choose which of the following additional tags to add:"),
-                    # TODO: needs check/uncheck ALL button. but it's difficult to implement
+                    rx.checkbox(text="Select / unselect all", name="check_all",
+                                checked=AddAdditionalTagsState.select_unselect_all_checked,
+                                on_change=AddAdditionalTagsState.on_check_all),
                     rx.foreach(AddAdditionalTagsState.image_tag_fields,
                                lambda field, idx: rx.hstack(
                                    rx.checkbox(text=field.tag, name=field.tag,
-                                               default_checked=AddAdditionalTagsState.image_tag_fields[
-                                                   idx].can_add_to_monitoring_db,
+                                               checked=AddAdditionalTagsState.image_tag_fields[idx].checked,
                                                disabled=AddAdditionalTagsState.loading | ~
                                                AddAdditionalTagsState.image_tag_fields[idx].can_add_to_monitoring_db,
-                                               # on_change=lambda checked: AddAdditionalTagsState.set_checkbox(idx, checked)
+                                               on_change=lambda checked: AddAdditionalTagsState.set_checkbox(idx,
+                                                                                                             checked)
                                                ),
                                    rx.cond(~AddAdditionalTagsState.image_tag_fields[idx].can_add_to_monitoring_db,
                                            rx.tooltip(rx.icon("circle-help", size=18),
