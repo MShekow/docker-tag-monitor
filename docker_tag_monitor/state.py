@@ -1,6 +1,5 @@
 import re
 import time
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -21,7 +20,7 @@ from .utils import images_exists_in_registry, add_selected_tags_to_monitoring_db
 
 
 class OverviewTableState(rx.State):
-    items: list[ImageToScrapeWithCount] = []
+    items: rx.Field[list[ImageToScrapeWithCount]] = rx.field([])
 
     total_items: int = 0
     offset: int = 0
@@ -136,9 +135,9 @@ class ImageDetailsState(rx.State):
     non_existent_image: bool = False
     image_to_scrape: Optional[ImageToScrape] = None
 
-    digest_items: list[ImageUpdate] = []
-    _digest_updates_aggregated: list[ImageUpdateAggregated] = []  # not sent to the UI
-    digest_updates_graph_data: list[ImageUpdateGraphData] = []
+    digest_items: rx.Field[list[ImageUpdate]] = rx.field([])
+    _digest_updates_aggregated: rx.Field[list[ImageUpdateAggregated]] = rx.field([])  # not sent to the UI
+    digest_updates_graph_data: rx.Field[list[ImageUpdateGraphData]] = rx.field([])
 
     total_items: int = 0
     offset: int = 0
@@ -330,17 +329,16 @@ class ImageDetailsState(rx.State):
             self.loading = False
 
 
-@dataclass
-class ImageTagField:
+class ImageTagField(rx.Base):
     tag: str
     can_add_to_monitoring_db: bool
-    # checked: bool
+    checked: bool
 
 
 class AddAdditionalTagsState(rx.State):
     view_state: str = "show_button"  # alternatives: "show_form", "show_result"
     loading: bool = False
-    image_tag_fields: list[ImageTagField] = []
+    image_tag_fields: rx.Field[list[ImageTagField]] = rx.field([])
     search_string: str = ""
     error: str = ""
 
@@ -409,7 +407,7 @@ class SearchState(rx.State):
     search_string: str = ""
     error: bool = False
     unknown_image: bool = False
-    search_results: list[ImageToScrape] = []
+    search_results: rx.Field[list[ImageToScrape]] = rx.field([])
 
     def clear_search(self):
         self.validate_and_search("")
@@ -485,8 +483,8 @@ class NavbarState(rx.State):
 
 
 class StatusState(rx.State):
-    daily_scan_summary_graph_data: list[DailyScanSummary] = []
-    daily_scan_duration_graph_data: list[DailyScanDuration] = []
+    daily_scan_summary_graph_data: rx.Field[list[DailyScanSummary]] =  rx.field([])
+    daily_scan_duration_graph_data: rx.Field[list[DailyScanDuration]] =  rx.field([])
 
     def load_data(self):
         self.daily_scan_summary_graph_data.clear()
