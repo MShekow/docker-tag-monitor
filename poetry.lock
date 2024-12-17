@@ -1952,13 +1952,13 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "reflex"
-version = "0.6.6.post3"
+version = "0.6.7"
 description = "Web apps in pure Python."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "reflex-0.6.6.post3-py3-none-any.whl", hash = "sha256:645fc50266bc7714f871a8008fc7f04f5b63ac3df1d941a2855766526d633281"},
-    {file = "reflex-0.6.6.post3.tar.gz", hash = "sha256:a59cc756a82c484a306a775baa75a4932b7a4a9cfd5a77d6d3d5300ccfef11ba"},
+    {file = "reflex-0.6.7-py3-none-any.whl", hash = "sha256:dfce3bc111c0fa0406204734b7e540b9e20d6f7d70be74fd46872fedb85af6ad"},
+    {file = "reflex-0.6.7.tar.gz", hash = "sha256:2b4f85fe025301ab3e8a017bff3a1fdc185198b38fd3365e52f48c648fd735c2"},
 ]
 
 [package.dependencies]
@@ -1986,7 +1986,7 @@ setuptools = ">=75.0"
 sqlmodel = ">=0.0.14,<0.1"
 starlette-admin = ">=0.11.0,<1.0"
 tomlkit = ">=0.12.4,<1.0"
-twine = ">=4.0.0,<6.0"
+twine = ">=4.0.0,<7.0"
 typer = ">=0.4.2,<1.0"
 typing_extensions = ">=4.6.0"
 uvicorn = ">=0.20.0"
@@ -2767,4 +2767,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "a9e9370df22bf5913e8c762d64121c6b1b602ac24e0e896e07545bfb364589dd"
+content-hash = "c67a9d0f2184f3df553b7cdaca8562315272d356bf73d5887a64d566aff796d1"
