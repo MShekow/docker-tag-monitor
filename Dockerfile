@@ -44,6 +44,6 @@ COPY --from=busybox:uclibc /bin/sh /bin/sh
 ENTRYPOINT []
 CMD reflex db migrate && exec reflex run --env prod --backend-only
 
-FROM caddy:2.8.4 AS frontend
+FROM caddy:2.9.1 AS frontend
 COPY --from=builder /app/.web/_static /srv
 COPY Caddyfile /etc/caddy/Caddyfile
