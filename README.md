@@ -42,3 +42,9 @@ Then, run `poetry install`, but make sure that either no venv is active, or the 
 - To only update the **transitive** dependencies (keeping the ones in `pyproject.toml` the same), run `poetry update --sync`, which updates the lock file and also installs the updates into the active venv.
 
 Make sure the `.venv` venv is active while running any of the above `poetry` commands.
+
+## Local development setup
+
+- Run `docker compose up database -d` to start the local PostgreSQL database
+- `export DB_URL=postgresql+psycopg://postgres:postgres@localhost:5432/postgres` to set the database connection string
+- Activate the `.venv`, then run `reflex run`
