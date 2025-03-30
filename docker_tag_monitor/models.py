@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 import reflex as rx
 import sqlalchemy as sa
@@ -13,10 +14,25 @@ class BackgroundJobExecution(rx.Model, table=True):
     failed_queries: int
 
 
+class ScrapedImage(rx.Model, table=True):
+    """
+    Helper table that keeps tracks of all tags of an image (updated every digest refresh cycle).
+    """
+    __tablename__ = "scraped_image"
+    __table_args__ = (
+        sa.UniqueConstraint("endpoint", "image", name="endpoint_with_image"),
+    )
+    endpoint: str
+    image: str
+    known_tags: List[float] = sqlmodel.Field(
+        sa_column=sqlmodel.Column(sqlmodel.ARRAY(sqlmodel.String), server_default="{}"))
+
+
 class ImageToScrape(rx.Model, table=True):
     __tablename__ = "image_to_scrape"
     __table_args__ = (
         sa.UniqueConstraint("endpoint", "image", "tag", name="endpoint_image_tag"),
+        sa.Index("compound_index_endpoint_image", "endpoint", "image"),
     )
     endpoint: str = sqlmodel.Field(index=True)
     image: str = sqlmodel.Field(index=True)

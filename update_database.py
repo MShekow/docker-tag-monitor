@@ -17,7 +17,8 @@ from sqlalchemy.sql import text
 from sqlmodel import delete, select, func
 
 import database_update.dockerhub_scraper as dockerhub_scraper
-from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution
+from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution, ScrapedImage
+from docker_tag_monitor.utils import get_all_image_tags
 
 logger = logging.getLogger("DatabaseUpdater")
 
@@ -161,6 +162,46 @@ async def refresh_digests():
                 f"{job_execution.failed_queries} failed queries")
 
 
+async def monitor_new_tags():
+    logger.info("Checking whether we need to monitor new tags")
+    async with DockerRegistryClientAsync() as registry_client:
+        await configure_dockerhub_credentials_if_provided(registry_client)
+        with rx.session() as session:
+            # Fill the scraped_image table with missing rows (each row is a unique (endpoint, image) pair from the
+            # image_to_scrape table, which also includes tags)
+            query = text("""INSERT INTO scraped_image (endpoint, image)
+                SELECT DISTINCT its.endpoint, its.image
+                FROM image_to_scrape its
+                LEFT JOIN scraped_image si
+                ON its.endpoint = si.endpoint AND its.image = si.image
+                WHERE si.endpoint IS NULL AND si.image IS NULL;
+                """)
+            session.exec(query)
+            session.commit()
+
+            updated_images = 0
+            updated_tags = 0
+
+            for scraped_image in session.exec(ScrapedImage.select()):
+                image_name = ImageName.parse(f"{scraped_image.endpoint}/{scraped_image.image}")
+                all_tags = await get_all_image_tags(image_name, client=registry_client)
+                if scraped_image.known_tags:
+                    tags_to_monitor = set(all_tags) - set(scraped_image.known_tags)
+                    for tag_to_monitor in tags_to_monitor:
+                        image_to_scrape = ImageToScrape(endpoint=scraped_image.endpoint,image=scraped_image.image,
+                            tag=tag_to_monitor)
+                        session.add(image_to_scrape)
+                        updated_tags += 1
+
+                if scraped_image.known_tags != all_tags:
+                    scraped_image.known_tags = all_tags
+                    session.add(scraped_image)
+                    updated_images += 1
+
+            session.commit()
+            logger.info(f"Added a total of {updated_tags} new tags for {updated_images} images to the monitoring database")
+
+
 async def delete_old_images(image_update_max_age: timedelta, image_last_accessed_max_age: timedelta):
     image_update_cutoff_date = datetime.now(ZoneInfo('UTC')) - image_update_max_age
     image_cutoff_date = datetime.now(ZoneInfo('UTC')) - image_last_accessed_max_age
@@ -218,6 +259,11 @@ async def main():
     Retention period of ImageToScrape entries: entries whose last access is older than this configured interval 
     will be automatically deleted.
     """
+    auto_monitor_new_tags = os.getenv("AUTO_MONITOR_NEW_TAGS", "true").lower() in ["true", "1", "yes"]
+    """
+    Whether to cache all known tags in the database, such that when refreshing digests, we also check whether the
+    image maintainers have added new tags since the last scrape, and if so, we monitor these tags automatically.
+    """
 
     while True:
         now = time.monotonic()
@@ -228,6 +274,10 @@ async def main():
         now = time.monotonic()
         if (now - last_digest_refresh_timestamp) > digest_refresh_interval.total_seconds():
             await delete_old_images(image_update_max_age, image_last_accessed_max_age)
+
+            if auto_monitor_new_tags:
+                await monitor_new_tags()
+
             digest_refresh_start = time.monotonic()
             await refresh_digests()
             last_digest_refresh_timestamp = time.monotonic()
