@@ -30,7 +30,7 @@ def digests_graph() -> rx.Component:
                     "bottom": 20,
                 },
                 width="100%",
-                height=500,  # TODO: needs a better solution
+                height=ImageDetailsState.digest_update_graph_height,
             ),
             width="100%",
         ),

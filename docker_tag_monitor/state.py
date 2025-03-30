@@ -28,7 +28,7 @@ class OverviewTableState(rx.State):
     offset: int = 0
     items_per_page: int = 12
 
-    @rx.var(cache=True)
+    @rx.var
     def page_number(self) -> int:
         return (
                 (self.offset // self.items_per_page)
@@ -36,7 +36,7 @@ class OverviewTableState(rx.State):
                 + (1 if self.offset % self.items_per_page else 0)
         )
 
-    @rx.var(cache=True)
+    @rx.var
     def total_pages(self) -> int:
         return (self.total_items // self.items_per_page) + (
             1 if self.total_items % self.items_per_page else 0
@@ -146,7 +146,17 @@ class ImageDetailsState(rx.State):
     items_per_page: int = 12
     aggregation_interval: str = "weekly"  # or "monthly", but we cannot use Literal["weekly", "monthly"] in Reflex state
 
-    @rx.var(cache=True)
+    @rx.var
+    def digest_update_graph_height(self) -> int:
+        """
+        Returns the height of the digest update graph in pixels, which should depend on the number of items in
+        self.digest_updates_graph_data.
+        Note: the values were experimentally determined. For tables with few rows (e.g. 1), we need a static offset,
+        or the rendering would break.
+        """
+        return 35 * len(self.digest_updates_graph_data) + 60
+
+    @rx.var
     def page_number(self) -> int:
         return (
                 (self.offset // self.items_per_page)
@@ -154,7 +164,7 @@ class ImageDetailsState(rx.State):
                 + (1 if self.offset % self.items_per_page else 0)
         )
 
-    @rx.var(cache=True)
+    @rx.var
     def total_pages(self) -> int:
         return (self.total_items // self.items_per_page) + (
             1 if self.total_items % self.items_per_page else 0
