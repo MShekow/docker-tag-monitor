@@ -11,7 +11,7 @@ def github_button() -> rx.Component:
         rx.badge(NavbarState.github_stars, color_scheme="gray"),
         on_click=rx.redirect(
             PROJECT_URL,
-            external=True,
+            is_external=True,
         ),
         variant="outline",
     )

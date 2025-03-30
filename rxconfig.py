@@ -4,4 +4,5 @@ import reflex as rx
 
 config = rx.Config(
     app_name="docker_tag_monitor",
+    show_built_with_reflex=False,
 )
