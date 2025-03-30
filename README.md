@@ -37,7 +37,7 @@ Then, run `poetry install`, but make sure that either no venv is active, or the 
 
 ### Updating dependencies
 
-- When dependencies changed **from the outside**, e.g. because Renovate updated the `pyproject.toml` and `poetry.lock` file, run `poetry install --sync` to update the local environment, where `--sync` removes any obsolete dependencies from the `.venv` venv.
+- When dependencies changed **from the outside**, e.g. because Renovate updated the `pyproject.toml` and `poetry.lock` file, run `poetry sync` to update the local environment. This removes any obsolete dependencies from the `.venv` venv.
 - If **you** updated a dependency in `pyproject.toml`, run `poetry update` to update the lock file and the local environment.
 - To only update the **transitive** dependencies (keeping the ones in `pyproject.toml` the same), run `poetry update --sync`, which updates the lock file and also installs the updates into the active venv.
 
