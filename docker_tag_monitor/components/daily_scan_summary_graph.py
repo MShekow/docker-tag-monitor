@@ -26,12 +26,12 @@ def daily_scan_summary_graph() -> rx.Component:
             data=StatusState.daily_scan_summary_graph_data,
             margin={
                 "top": 40,
-                "right": 0,
+                "right": 40,
                 "left": 0,
                 "bottom": 80,
             },
             width="100%",
-            height=400,  # TODO: needs a better solution
+            height=500,
         ),
         width="100%"
     )
