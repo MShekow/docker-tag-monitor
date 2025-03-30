@@ -48,7 +48,7 @@ services:
       - "/app/update_database.py"
 
   database:
-    image: postgres:17.1
+    image: postgres:17.4
     ports:
       - "5432:5432"
     environment:
@@ -66,7 +66,7 @@ services:
       retries: 5
 
   valkey:  # Redis alternative
-    image: bitnami/valkey:7.2.7
+    image: bitnami/valkey:8.0.2
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
     healthcheck:
