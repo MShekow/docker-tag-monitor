@@ -11,7 +11,7 @@ appVersion: "2025.03.30"
 dependencies:
   - name: postgresql
     repository: oci://registry-1.docker.io/bitnamicharts
-    version: 16.2.1
+    version: 16.6.3
   - name: valkey
     repository: oci://registry-1.docker.io/bitnamicharts
     version: 2.0.2
