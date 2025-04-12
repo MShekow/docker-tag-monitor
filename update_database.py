@@ -188,10 +188,17 @@ async def monitor_new_tags():
                 if scraped_image.known_tags:
                     tags_to_monitor = set(all_tags) - set(scraped_image.known_tags)
                     for tag_to_monitor in tags_to_monitor:
-                        image_to_scrape = ImageToScrape(endpoint=scraped_image.endpoint,image=scraped_image.image,
-                            tag=tag_to_monitor)
-                        session.add(image_to_scrape)
-                        updated_tags += 1
+                        # Only add the ImageToScrape if it does not already exist (e.g. added manually by a user).
+                        # Otherwise, we would get a SQL unique constraint violation in the ImageToScrape table!
+                        existing_query = ImageToScrape.select().where(ImageToScrape.endpoint == scraped_image.endpoint,
+                                                                      ImageToScrape.image == scraped_image.image,
+                                                                      ImageToScrape.tag == tag_to_monitor)
+                        existing_image_to_scrape = session.exec(existing_query).first()
+                        if existing_image_to_scrape is None:
+                            image_to_scrape = ImageToScrape(endpoint=scraped_image.endpoint, image=scraped_image.image,
+                                                            tag=tag_to_monitor)
+                            session.add(image_to_scrape)
+                            updated_tags += 1
 
                 if scraped_image.known_tags != all_tags:
                     scraped_image.known_tags = all_tags
