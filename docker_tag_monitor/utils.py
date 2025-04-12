@@ -61,6 +61,15 @@ async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegis
         # Tags are returned in lexicographical order, so usually "oldest version first". To the user, it will be more
         # practical to see the most recent versions first, so we reverse the order
         tags.reverse()
+
+        # Remove tags that point to (Cosign/Notation) signatures or attestations. The naming scheme for such tags is
+        # sha256-<64-characters-of-the-hash>[.att|.sig|.sbom]
+        def is_signature_or_attestation(t: str) -> bool:
+            # 71 = len("sha256-") + 64
+            return len(t) >= 71 and t.startswith("sha256-")
+
+        tags = [t for t in tags if not is_signature_or_attestation(t)]
+
         return tags
     finally:
         if close_connection:
