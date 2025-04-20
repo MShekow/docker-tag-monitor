@@ -143,6 +143,12 @@ async def refresh_digests():
                                 logger.warning(f"Unable to delete ImageToScrape "
                                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
                                                f"from the registry (image is no longer found in the registry): {e}")
+                        else:
+                            logger.warning(
+                                f"Failed to retrieve digest for image "
+                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}'; "
+                                f"Unexpected status code={result.client_response.status}; "
+                                f"headers={result.client_response.headers}")
 
             batch_size = 10
             for image_to_scrape in session.exec(query):
