@@ -95,7 +95,15 @@ async def refresh_digests():
                     result = await registry_client.head_manifest(image_name)
                     return img_to_scrape, result
                 except aiohttp.ClientError as e:
-                    logger.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
+                    if isinstance(e, aiohttp.ServerDisconnectedError):
+                        try:
+                            result = await registry_client.head_manifest(image_name)
+                            return img_to_scrape, result
+                        except aiohttp.ClientError as e:
+                            logger.warning(f"Failed to retrieve digest (retried for Server Disconnected "
+                                           f"error) for image '{image_name}': {e}")
+                    else:
+                        logger.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
                     return img_to_scrape, None
 
             async def update_database_entries(
