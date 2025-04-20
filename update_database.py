@@ -23,8 +23,6 @@ from docker_tag_monitor.utils import get_all_image_tags
 logger = logging.getLogger("DatabaseUpdater")
 
 
-# TODO: Figure out whether we have to do ratelimit detection and insert extra waits
-
 async def update_popular_images_to_scrape():
     popular_images = await dockerhub_scraper.get_popular_images()
     if not popular_images:
@@ -82,7 +80,28 @@ async def refresh_digests():
                         refetched_result = results[i][1]
                         if refetched_result and not refetched_result.result:
                             logger.warning(
-                                f"Failed to refresh digest for image "
+                                f"Failed to refresh digest (due to invalid auth token) for image "
+                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}'; "
+                                f"Status code={refetched_result.client_response.status}; "
+                                f"headers={refetched_result.client_response.headers}")
+
+            async def repeat_query_on_hitting_rate_limit(
+                    results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
+                result_indices_indicating_rate_limit = []
+                for i, res_tuple in enumerate(results):
+                    _img_to_scrape, res = res_tuple
+                    if res is not None and res.client_response.status == 429:
+                        result_indices_indicating_rate_limit.append(i)
+
+                if result_indices_indicating_rate_limit:
+                    await asyncio.sleep(10)
+                    for i in result_indices_indicating_rate_limit:
+                        results[i] = await fetch_digest(results[i][0])
+                        img_to_scrape = results[i][0]
+                        refetched_result = results[i][1]
+                        if refetched_result and not refetched_result.result:
+                            logger.warning(
+                                f"Failed to refresh digest (due to rate limit) for image "
                                 f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}'; "
                                 f"Status code={refetched_result.client_response.status}; "
                                 f"headers={refetched_result.client_response.headers}")
@@ -156,6 +175,7 @@ async def refresh_digests():
                 if len(images_to_scrape) == batch_size:
                     results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
                     await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
+                    await repeat_query_on_hitting_rate_limit(results)
                     await update_database_entries(results)
                     images_to_scrape = []
 
