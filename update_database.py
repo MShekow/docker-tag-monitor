@@ -95,6 +95,7 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
 
                 if result_indices_indicating_rate_limit:
                     await asyncio.sleep(digest_refresh_cooldown_interval.total_seconds())
+                    registry_client.tokens.clear()  # force re-generation of tokens, they likely expired after waiting
                     for i in result_indices_indicating_rate_limit:
                         results[i] = await fetch_digest(results[i][0])
                         img_to_scrape = results[i][0]
