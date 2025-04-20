@@ -58,6 +58,8 @@ spec:
           env:  # TODO: DockerHub credentials
             - name: DB_URL
               value: "postgresql+psycopg://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+            - name: DIGEST_REFRESH_COOLDOWN_INTERVAL
+              value: {{ .Values.backend.digestRefreshCooldownInterval }}
           args:
             - "python"
             - "/app/update_database.py"

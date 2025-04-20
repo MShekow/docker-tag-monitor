@@ -51,7 +51,7 @@ async def update_popular_images_to_scrape():
     logger.info(f"Added {new_images} NEW images to scrape to the database")
 
 
-async def refresh_digests():
+async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
     """
     Iterates over all ImageToScrape entries and refreshes the digest for each one. Uses batching to speed up the
     process.
@@ -94,7 +94,7 @@ async def refresh_digests():
                         result_indices_indicating_rate_limit.append(i)
 
                 if result_indices_indicating_rate_limit:
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(digest_refresh_cooldown_interval.total_seconds())
                     for i in result_indices_indicating_rate_limit:
                         results[i] = await fetch_digest(results[i][0])
                         img_to_scrape = results[i][0]
@@ -182,6 +182,7 @@ async def refresh_digests():
             if images_to_scrape:  # batch size has not been reached, but there are still some images left to process
                 results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
                 await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
+                await repeat_query_on_hitting_rate_limit(results)
                 await update_database_entries(results)
 
             job_execution.completed = datetime.now(ZoneInfo('UTC'))
@@ -305,6 +306,11 @@ async def main():
     Whether to cache all known tags in the database, such that when refreshing digests, we also check whether the
     image maintainers have added new tags since the last scrape, and if so, we monitor these tags automatically.
     """
+    digest_refresh_cooldown_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_COOLDOWN_INTERVAL", "1m"))
+    """
+    Time interval to wait before repeating requests when hitting the registry's rate limit (getting HTTP 429 status
+    codes in the response).
+    """
 
     while True:
         now = time.monotonic()
@@ -320,7 +326,7 @@ async def main():
                 await monitor_new_tags()
 
             digest_refresh_start = time.monotonic()
-            await refresh_digests()
+            await refresh_digests(digest_refresh_cooldown_interval)
             last_digest_refresh_timestamp = time.monotonic()
 
             digest_refresh_duration = timedelta(seconds=last_digest_refresh_timestamp - digest_refresh_start)

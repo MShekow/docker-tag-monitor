@@ -25,6 +25,7 @@ frontend:
 backend:
   replicaCount: 1
   processesPerReplica: 2
+  digestRefreshCooldownInterval: "1m"
   resources: { }
     # limits:
     #   cpu: 100m
