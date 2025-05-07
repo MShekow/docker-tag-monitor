@@ -1,4 +1,6 @@
+import base64
 import logging
+import os
 from typing import Optional
 
 import reflex as rx
@@ -12,8 +14,26 @@ logger = logging.getLogger("DockerTagMonitor-Utils")
 TAGS_PER_IMAGE_MAX_COUNT = 50
 
 
+async def configure_client(registry_client: DockerRegistryClientAsync):
+    # Add Docker Hub credentials, if provided via environment variables
+    username = os.getenv("DOCKERHUB_USERNAME")
+    password = os.getenv("DOCKERHUB_PASSWORD")
+    # Note: from various experiments, since we just perform HEAD requests to Docker Hub, it seems that there is no
+    # ratelimit-related difference between using an account, or being anonymous
+    if username and password:
+        b64_credentials = base64.b64encode(f"{username}:{password}".encode("ascii")).decode("ascii")
+        await registry_client.add_credentials(credentials=b64_credentials, endpoint="https://index.docker.io/")
+
+    # Add compatibility for Chainguard's registry, whose auth endpoint does not return Content-Type: application/json
+    # but "text/plain", which causes an exception within the library
+    await registry_client.add_auth_token_json_kwargs(
+        endpoint="cgr.dev", json_kwargs={"content_type": "text/plain"}
+    )
+
+
 async def images_exists_in_registry(image_names: list[ImageName]) -> bool:
     async with DockerRegistryClientAsync() as registry_client:
+        await configure_client(registry_client)
         try:
             for image_name in image_names:
                 result = await registry_client.head_manifest(image_name)
@@ -29,6 +49,7 @@ async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegis
     close_connection = False
     if client is None:
         client = DockerRegistryClientAsync()
+        await configure_client(client)
         close_connection = True
     """
     Ideally, we would like the sorting of the returned tags to be done by push-date (descending).

@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import logging
 import os
 import sys
@@ -18,7 +17,7 @@ from sqlmodel import delete, select, func
 
 import database_update.dockerhub_scraper as dockerhub_scraper
 from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution, ScrapedImage
-from docker_tag_monitor.utils import get_all_image_tags
+from docker_tag_monitor.utils import get_all_image_tags, configure_client
 
 logger = logging.getLogger("DatabaseUpdater")
 
@@ -60,7 +59,7 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
     job_execution = BackgroundJobExecution(started=datetime.now(ZoneInfo('UTC')), successful_queries=0,
                                            failed_queries=0)
     async with DockerRegistryClientAsync() as registry_client:
-        await configure_dockerhub_credentials_if_provided(registry_client)
+        await configure_client(registry_client)
         with rx.session() as session:
             query = ImageToScrape.select()
             images_to_scrape = []
@@ -201,17 +200,18 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
 async def monitor_new_tags():
     logger.info("Checking whether we need to monitor new tags")
     async with DockerRegistryClientAsync() as registry_client:
-        await configure_dockerhub_credentials_if_provided(registry_client)
+        await configure_client(registry_client)
         with rx.session() as session:
             # Fill the scraped_image table with missing rows (each row is a unique (endpoint, image) pair from the
             # image_to_scrape table, which also includes tags)
             query = text("""INSERT INTO scraped_image (endpoint, image)
-                SELECT DISTINCT its.endpoint, its.image
-                FROM image_to_scrape its
-                LEFT JOIN scraped_image si
-                ON its.endpoint = si.endpoint AND its.image = si.image
-                WHERE si.endpoint IS NULL AND si.image IS NULL;
-                """)
+                            SELECT DISTINCT its.endpoint, its.image
+                            FROM image_to_scrape its
+                                     LEFT JOIN scraped_image si
+                                               ON its.endpoint = si.endpoint AND its.image = si.image
+                            WHERE si.endpoint IS NULL
+                              AND si.image IS NULL;
+                         """)
             session.exec(query)
             session.commit()
 
@@ -242,7 +242,8 @@ async def monitor_new_tags():
                     updated_images += 1
 
             session.commit()
-            logger.info(f"Added a total of {updated_tags} new tags for {updated_images} images to the monitoring database")
+            logger.info(
+                f"Added a total of {updated_tags} new tags for {updated_images} images to the monitoring database")
 
 
 async def delete_old_images(image_update_max_age: timedelta, image_last_accessed_max_age: timedelta):
@@ -263,16 +264,6 @@ async def delete_old_images(image_update_max_age: timedelta, image_last_accessed
                         f"{outdated_image_updates_count} outdated ImageUpdate entries")
 
         session.commit()
-
-
-async def configure_dockerhub_credentials_if_provided(registry_client: DockerRegistryClientAsync):
-    username = os.getenv("DOCKERHUB_USERNAME")
-    password = os.getenv("DOCKERHUB_PASSWORD")
-    # Note: from various experiments, since we just perform HEAD requests to Docker Hub, it seems that there is no
-    # ratelimit-related difference between using an account, or being anonymous
-    if username and password:
-        b64_credentials = base64.b64encode(f"{username}:{password}".encode("ascii")).decode("ascii")
-        await registry_client.add_credentials(credentials=b64_credentials, endpoint="https://index.docker.io/")
 
 
 def verify_database_connection():
