@@ -577,14 +577,14 @@ files = [
 
 [[package]]
 name = "docker-registry-client-async"
-version = "1.0.2"
+version = "1.0.3"
 description = "An AIOHTTP based Python REST client for the Docker Registry."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "docker_registry_client_async-1.0.2-py3-none-any.whl", hash = "sha256:798fa3f4ac12c39359fd7e8020ec4c0ddc27480e399ef7208032b644dd8ca275"},
-    {file = "docker_registry_client_async-1.0.2.tar.gz", hash = "sha256:e2fc9670f562288f2e66bd3eb41e176c89aba7701ef1a28d0062f29f0137ac33"},
+    {file = "docker_registry_client_async-1.0.3-py3-none-any.whl", hash = "sha256:8fafcf5140094811de03605b384c203d0137321a96b6d194f7fde9c20a06a973"},
+    {file = "docker_registry_client_async-1.0.3.tar.gz", hash = "sha256:dca2d937870b03b25e2ec036627755c81412c3b725b1a3ececb51a9b062d858a"},
 ]
 
 [package.dependencies]
@@ -3069,4 +3069,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "6f46fac602813bc8a16af7d52a48984aa74b640b97720db5480049127edc3d2f"
+content-hash = "4c8286bc0b920aef8cff508b9ed0fd7d4f26be03817e3f82a89ad7444b531ff1"
