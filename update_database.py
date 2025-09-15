@@ -220,7 +220,11 @@ async def monitor_new_tags():
 
             for scraped_image in session.exec(ScrapedImage.select()):
                 image_name = ImageName.parse(f"{scraped_image.endpoint}/{scraped_image.image}")
-                all_tags = await get_all_image_tags(image_name, client=registry_client)
+                try:
+                    all_tags = await get_all_image_tags(image_name, client=registry_client)
+                except Exception as e:
+                    logger.warning(f"Failed to retrieve tags for image '{image_name}': {e}")
+                    continue
                 if scraped_image.known_tags:
                     tags_to_monitor = set(all_tags) - set(scraped_image.known_tags)
                     for tag_to_monitor in tags_to_monitor:
