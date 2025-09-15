@@ -9,7 +9,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-reflex = "0.7.4"
+reflex = "0.7.5.post1"
 docker-registry-client-async = "1.0.3"
 psycopg = {version = "3.2.6", extras = ["binary"]}
 durationpy = "0.9"

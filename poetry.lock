@@ -2200,14 +2200,14 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "reflex"
-version = "0.7.4"
+version = "0.7.5.post1"
 description = "Web apps in pure Python."
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "reflex-0.7.4-py3-none-any.whl", hash = "sha256:b3f98ddd896416e19bfe225f49a4cecd6613b288f6ac197ac48a6a1c47320648"},
-    {file = "reflex-0.7.4.tar.gz", hash = "sha256:c08757a3240345042587ad65d8835cfb1542505e5702703ac7f571acd0fd361c"},
+    {file = "reflex-0.7.5.post1-py3-none-any.whl", hash = "sha256:4616e38652e027ae81cf6d7fb652df8cdb3185ad5a980c8304bf840759d6ffe3"},
+    {file = "reflex-0.7.5.post1.tar.gz", hash = "sha256:c65bc8f5b5cd2b29a05cbe94108f8f8f51967b7c52f832589766fbd8744c2fd9"},
 ]
 
 [package.dependencies]
@@ -2216,7 +2216,7 @@ build = ">=1.0.3,<2.0"
 charset-normalizer = ">=3.3.2,<4.0"
 distro = {version = ">=1.8.0,<2.0", markers = "platform_system == \"Linux\""}
 fastapi = ">=0.96.0,<0.111.0 || >0.111.0,<0.111.1 || >0.111.1"
-granian = {version = ">=2.0.0", extras = ["reload"]}
+granian = {version = ">=2.2.0", extras = ["reload"]}
 gunicorn = ">=23.0.0,<24.0.0"
 httpx = ">=0.25.1,<1.0"
 jinja2 = ">=3.1.2,<4.0"
@@ -3086,4 +3086,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "4c8286bc0b920aef8cff508b9ed0fd7d4f26be03817e3f82a89ad7444b531ff1"
+content-hash = "c77e73ec28b1c0b095bea96fa9b24be5ae04e7684643732b1659a8b7ab4b8ec8"
