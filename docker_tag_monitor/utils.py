@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import reflex as rx
+from aiohttp import ContentTypeError
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from sqlmodel import col
 
@@ -75,7 +76,13 @@ async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegis
     image has thousands of tags.
     """
     try:
-        tag_list_response = await client.get_tag_list(image_name)
+        try:
+            tag_list_response = await client.get_tag_list(image_name)
+        except ContentTypeError as e:
+            if e.status == 200 and (content_type := e.headers["content-type"]) != "application/json":
+                tag_list_response = await client.get_tag_list(image_name, json_kwargs={"content_type": content_type})
+            else:
+                raise
         # Note: tag_list_response.tags is an array of ImageName objects
         tag_list: list[ImageName] = tag_list_response.tags
         tags: list[str] = [tag.tag for tag in tag_list]  # noqa (type parser false positive)
