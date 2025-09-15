@@ -370,7 +370,7 @@ class AddAdditionalTagsState(rx.State):
             try:
                 self._image_tags = await get_additional_image_tags_to_monitor(image_name)
                 self.view_state = "show_form"
-            except ValueError as e:
+            except Exception as e:
                 self.error = str(e)
                 self._image_tags.clear()
 
