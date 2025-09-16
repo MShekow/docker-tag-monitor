@@ -198,12 +198,23 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
 
 
 async def monitor_new_tags():
+    """
+    Determines whether new tags exist for each unique image, compared to the last digest refresh run.
+    The basic approach is as follows:
+    - We maintain a helper table, ScrapedImage, that contains each unique (endpoint, image) pair from the ImageToScrape
+      table, along with a known_tags column that contains all tags that we have seen for this image thus far.
+    - For each entry in the ScrapedImage table, we retrieve all tags from the registry and compare them to the
+      known_tags column. Those tags that are not yet in known_tags are considered "new" tags, and we add them to
+      the ImageToScrape table (if they do not already exist there).
+    - In each digest refresh run, we update the known_tags column, so that we always have the latest
+      information about all known tags for an image.
+    """
     logger.info("Checking whether we need to monitor new tags")
     async with DockerRegistryClientAsync() as registry_client:
         await configure_client(registry_client)
         with rx.session() as session:
             # Fill the scraped_image table with missing rows (each row is a unique (endpoint, image) pair from the
-            # image_to_scrape table, which also includes tags)
+            # image_to_scrape table, with an additional known_tags string-array column)
             query = text("""INSERT INTO scraped_image (endpoint, image)
                             SELECT DISTINCT its.endpoint, its.image
                             FROM image_to_scrape its
