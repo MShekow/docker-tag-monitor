@@ -21,6 +21,3 @@ postgresql:
 valkey:
   primary:
     resourcesPreset: none
-
-backend:
-  digestRefreshCooldownInterval: "10m"

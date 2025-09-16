@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import aiohttp
 import durationpy
 import reflex as rx
+from asynciolimiter import Limiter
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
 from docker_registry_client_async.typing import DockerRegistryClientAsyncHeadManifest
 from sqlalchemy.sql import text
@@ -20,6 +21,8 @@ from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobE
 from docker_tag_monitor.utils import get_all_image_tags, configure_client
 
 logger = logging.getLogger("DatabaseUpdater")
+
+http_request_limiter = Limiter(10)  # Note: the value is overwritten in main()
 
 
 async def update_popular_images_to_scrape():
@@ -111,7 +114,7 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
                 image_name = ImageName.parse(
                     f"{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}")
                 try:
-                    result = await registry_client.head_manifest(image_name)
+                    result = await http_request_limiter.wrap(registry_client.head_manifest(image_name))
                     return img_to_scrape, result
                 except aiohttp.ClientError as e:
                     if isinstance(e, aiohttp.ServerDisconnectedError | aiohttp.ServerTimeoutError):
@@ -232,7 +235,7 @@ async def monitor_new_tags():
             for scraped_image in session.exec(ScrapedImage.select()):
                 image_name = ImageName.parse(f"{scraped_image.endpoint}/{scraped_image.image}")
                 try:
-                    all_tags = await get_all_image_tags(image_name, client=registry_client)
+                    all_tags = await http_request_limiter.wrap(get_all_image_tags(image_name, client=registry_client))
                 except Exception as e:
                     logger.warning(f"Failed to retrieve tags for image '{image_name}': {e}")
                     continue
@@ -318,6 +321,13 @@ async def main():
     Time interval to wait before repeating requests when hitting the registry's rate limit (getting HTTP 429 status
     codes in the response).
     """
+    max_requests_per_second = int(os.getenv("MAX_REQUESTS_PER_SECOND", "10"))
+    """
+    Maximum number of requests per second made to image registries (to avoid hitting their rate limits).
+    """
+
+    global http_request_limiter
+    http_request_limiter = Limiter(max_requests_per_second)
 
     while True:
         now = time.monotonic()
