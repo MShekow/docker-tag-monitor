@@ -10,14 +10,14 @@ def daily_scan_summary_graph() -> rx.Component:
                 data_key="successful_scans",
                 stroke=rx.color("green", 8),
                 fill=rx.color("green", 9),
-                name="Successful scans",
+                name="Successful scan runs",
                 stack_id="1"
             ),
             rx.recharts.bar(
                 data_key="failed_scans",
                 stroke=rx.color("red", 8),
                 fill=rx.color("red", 9),
-                name="Failed scans",
+                name="Failed scan runs",
                 stack_id="1"
             ),
             rx.recharts.x_axis(data_key="date", angle=70, text_anchor="start"),
