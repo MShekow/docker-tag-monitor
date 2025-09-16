@@ -20,7 +20,7 @@ services:
     ports:
       - "8081:8000"
     environment:
-      DB_URL: "postgresql+psycopg://postgres:postgres@database:5432/postgres"
+      REFLEX_DB_URL: "postgresql+psycopg://postgres:postgres@database:5432/postgres"
       REDIS_URL: "redis://valkey:6379"
       GUNICORN_WORKERS: 2
     depends_on:
@@ -35,7 +35,7 @@ services:
       context: .
       target: backend
     environment:
-      DB_URL: "postgresql+psycopg://postgres:postgres@database:5432/postgres"
+      REFLEX_DB_URL: "postgresql+psycopg://postgres:postgres@database:5432/postgres"
       # Docker Hub credentials, to avoid hitting rate limits, values are set in .env file
       DOCKER_USERNAME: "${DOCKER_USERNAME}"
       DOCKER_PASSWORD: "${DOCKER_PASSWORD}"

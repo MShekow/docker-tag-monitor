@@ -46,5 +46,5 @@ Make sure the `.venv` venv is active while running any of the above `poetry` com
 ## Local development setup
 
 - Run `docker compose up database -d` to start the local PostgreSQL database
-- `export DB_URL=postgresql+psycopg://postgres:postgres@localhost:5432/postgres` to set the database connection string
+- `export REFLEX_DB_URL=postgresql+psycopg://postgres:postgres@localhost:5432/postgres` to set the database connection string
 - Activate the `.venv`, then run `reflex run`
