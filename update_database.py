@@ -114,13 +114,13 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
                     result = await registry_client.head_manifest(image_name)
                     return img_to_scrape, result
                 except aiohttp.ClientError as e:
-                    if isinstance(e, aiohttp.ServerDisconnectedError):
+                    if isinstance(e, aiohttp.ServerDisconnectedError | aiohttp.ServerTimeoutError):
                         try:
                             result = await registry_client.head_manifest(image_name)
                             return img_to_scrape, result
                         except aiohttp.ClientError as e:
                             logger.warning(f"Failed to retrieve digest (retried for Server Disconnected "
-                                           f"error) for image '{image_name}': {e}")
+                                           f"error or Timeout error) for image '{image_name}': {e}")
                     else:
                         logger.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
                     return img_to_scrape, None
