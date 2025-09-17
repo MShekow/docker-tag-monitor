@@ -26,9 +26,10 @@ async def configure_client(registry_client: DockerRegistryClientAsync):
         await registry_client.add_credentials(credentials=b64_credentials, endpoint="https://index.docker.io/")
 
     # Add compatibility for Chainguard's registry, whose auth endpoint does not return Content-Type: application/json
-    # but "text/plain", which causes an exception within the library
+    # but "text/plain", which would cause an aiohttp.ContentTypeError within the docker_registry_client_async library.
+    # By setting the value to an empty string, the aiohttp client's json() method WON'T check the content type at all.
     await registry_client.add_auth_token_json_kwargs(
-        endpoint="cgr.dev", json_kwargs={"content_type": "text/plain"}
+        endpoint="cgr.dev", json_kwargs={"content_type": ""}
     )
 
 

@@ -76,6 +76,10 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
                         result_indices_with_invalid_token.append(i)
                 if result_indices_with_invalid_token:
                     registry_client.tokens.clear()  # force registry_client to re-generate tokens
+                    # The effect of the call that configure_client() makes to
+                    # registry_client.add_auth_token_json_kwargs() is lost when calling registry_client.tokens.clear(),
+                    # so we need to call it again
+                    await configure_client(registry_client)
                     for i in result_indices_with_invalid_token:
                         results[i] = await fetch_digest(results[i][0])
                         img_to_scrape = results[i][0]
@@ -98,6 +102,10 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
                 if result_indices_indicating_rate_limit:
                     await asyncio.sleep(digest_refresh_cooldown_interval.total_seconds())
                     registry_client.tokens.clear()  # force re-generation of tokens, they likely expired after waiting
+                    # The effect of the call that configure_client() makes to
+                    # registry_client.add_auth_token_json_kwargs() is lost when calling registry_client.tokens.clear(),
+                    # so we need to call it again
+                    await configure_client(registry_client)
                     for i in result_indices_indicating_rate_limit:
                         results[i] = await fetch_digest(results[i][0])
                         img_to_scrape = results[i][0]
