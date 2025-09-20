@@ -11,7 +11,7 @@ import aiohttp
 import durationpy
 import reflex as rx
 from asynciolimiter import Limiter
-from docker_registry_client_async import ImageName, DockerRegistryClientAsync
+from docker_registry_client_async import ImageName, DockerRegistryClientAsync, Indices
 from docker_registry_client_async.typing import DockerRegistryClientAsyncHeadManifest
 from sqlalchemy.sql import text
 from sqlmodel import delete, select, func
@@ -53,7 +53,15 @@ async def update_popular_images_to_scrape():
     logger.info(f"Added {new_images} NEW images to scrape to the database")
 
 
-async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
+def get_gcr_mirror_image_if_possible(img_to_scrape: ImageToScrape, retry_count: int) -> Optional[ImageName]:
+    if retry_count % 2 == 1 and img_to_scrape.endpoint == Indices.DOCKERHUB:
+        # On every second retry, try to use the GCR mirror for Docker Hub images
+        return ImageName(endpoint="mirror.gcr.io", image=img_to_scrape.image, tag=img_to_scrape.tag)
+    return None
+
+
+async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retries_on_rate_limit: int,
+                          sleep_interval_on_rate_limit: timedelta):
     """
     Iterates over all ImageToScrape entries and refreshes the digest for each one. Uses batching to speed up the
     process.
@@ -91,49 +99,57 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
                                 f"Status code={refetched_result.client_response.status}; "
                                 f"headers={refetched_result.client_response.headers}")
 
-            async def repeat_query_on_hitting_rate_limit(
+            async def repeat_query_on_hitting_rate_limit_or_server_error(
                     results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
-                result_indices_indicating_rate_limit = []
-                for i, res_tuple in enumerate(results):
-                    _img_to_scrape, res = res_tuple
-                    if res is not None and res.client_response.status == 429:
-                        result_indices_indicating_rate_limit.append(i)
+                results_affected_by_rate_limit = False
 
-                if result_indices_indicating_rate_limit:
+                for i, res_tuple in enumerate(results):
+                    img_to_scrape, res = res_tuple
+                    if res is None or res.client_response.status in (429, 500):
+                        results_affected_by_rate_limit = True
+
+                        for retry_count in range(max_retries_on_rate_limit):
+                            await asyncio.sleep(sleep_interval_on_rate_limit.total_seconds())
+                            image_name = get_gcr_mirror_image_if_possible(img_to_scrape, retry_count)
+                            _, refetched_result = await fetch_digest(img_to_scrape, override_image_name=image_name)
+                            if refetched_result is not None and refetched_result.client_response.status in (200, 404):
+                                results[i] = (img_to_scrape, refetched_result)
+                                break
+
+                if results_affected_by_rate_limit:
                     await asyncio.sleep(digest_refresh_cooldown_interval.total_seconds())
                     registry_client.tokens.clear()  # force re-generation of tokens, they likely expired after waiting
                     # The effect of the call that configure_client() makes to
                     # registry_client.add_auth_token_json_kwargs() is lost when calling registry_client.tokens.clear(),
                     # so we need to call it again
                     await configure_client(registry_client)
-                    for i in result_indices_indicating_rate_limit:
-                        results[i] = await fetch_digest(results[i][0])
-                        img_to_scrape = results[i][0]
-                        refetched_result = results[i][1]
-                        if refetched_result and not refetched_result.result:
-                            logger.warning(
-                                f"Failed to refresh digest (due to rate limit) for image "
-                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}'; "
-                                f"Status code={refetched_result.client_response.status}; "
-                                f"headers={refetched_result.client_response.headers}")
 
-            async def fetch_digest(img_to_scrape: ImageToScrape) \
+                result_indices_indicating_rate_limit = []
+                for i, res_tuple in enumerate(results):
+                    _img_to_scrape, res = res_tuple
+                    if res is not None and res.client_response.status == 429:
+                        result_indices_indicating_rate_limit.append(i)
+
+            async def fetch_digest(img_to_scrape: ImageToScrape, override_image_name: Optional[ImageName] = None) \
                     -> Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]:
-                image_name = ImageName.parse(
+                image_name = override_image_name if override_image_name else ImageName.parse(
                     f"{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}")
                 try:
                     result = await http_request_limiter.wrap(registry_client.head_manifest(image_name))
                     return img_to_scrape, result
                 except aiohttp.ClientError as e:
+                    # Note: aside from actual connection issues (where the HTTP request does not complete at all),
+                    # a ClientError is also raised by DockerRegistryClientAsync when the HTTP request that retrieves the
+                    # auth token fails (e.g. with status code 429)!
                     if isinstance(e, aiohttp.ServerDisconnectedError | aiohttp.ServerTimeoutError):
                         try:
-                            result = await registry_client.head_manifest(image_name)
+                            result = await http_request_limiter.wrap(registry_client.head_manifest(image_name))
                             return img_to_scrape, result
                         except aiohttp.ClientError as e:
                             logger.warning(f"Failed to retrieve digest (retried for Server Disconnected "
                                            f"error or Timeout error) for image '{image_name}': {e}")
                     else:
-                        logger.warning(f"Failed to retrieve digest for image '{image_name}': {e}")
+                        logger.warning(f"Failed to retrieve digest for image '{image_name}' (ClientError): {e}")
                     return img_to_scrape, None
 
             async def update_database_entries(
@@ -186,14 +202,14 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta):
                 if len(images_to_scrape) == batch_size:
                     results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
                     await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
-                    await repeat_query_on_hitting_rate_limit(results)
+                    await repeat_query_on_hitting_rate_limit_or_server_error(results)
                     await update_database_entries(results)
                     images_to_scrape = []
 
             if images_to_scrape:  # batch size has not been reached, but there are still some images left to process
                 results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
                 await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
-                await repeat_query_on_hitting_rate_limit(results)
+                await repeat_query_on_hitting_rate_limit_or_server_error(results)
                 await update_database_entries(results)
 
             job_execution.completed = datetime.now(ZoneInfo('UTC'))
@@ -324,14 +340,24 @@ async def main():
     Whether to cache all known tags in the database, such that when refreshing digests, we also check whether the
     image maintainers have added new tags since the last scrape, and if so, we monitor these tags automatically.
     """
-    digest_refresh_cooldown_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_COOLDOWN_INTERVAL", "1m"))
+    digest_refresh_cooldown_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_COOLDOWN_INTERVAL", "5s"))
     """
-    Time interval to wait before repeating requests when hitting the registry's rate limit (getting HTTP 429 status
-    codes in the response).
+    Time interval to wait before starting the next batch of requests, when hitting the registry's rate limit (
+    getting HTTP 429 status codes in the response).
     """
     max_requests_per_second = int(os.getenv("MAX_REQUESTS_PER_SECOND", "10"))
     """
     Maximum number of requests per second made to image registries (to avoid hitting their rate limits).
+    """
+    max_retries_on_rate_limit = int(os.getenv("MAX_RETRIES_ON_RATE_LIMIT", "10"))
+    """
+    Maximum number of retries (per image) when hitting the registry's rate limit (getting HTTP 429 status codes
+    in the response).
+    """
+    sleep_interval_on_rate_limit = durationpy.from_str(os.getenv("SLEEP_INTERVAL_ON_RATE_LIMIT", "1s"))
+    """
+    Time interval to wait between retries when hitting the registry's rate limit (getting HTTP 429 status
+    codes in the response).
     """
 
     global http_request_limiter
@@ -351,7 +377,8 @@ async def main():
                 await monitor_new_tags()
 
             digest_refresh_start = time.monotonic()
-            await refresh_digests(digest_refresh_cooldown_interval)
+            await refresh_digests(digest_refresh_cooldown_interval, max_retries_on_rate_limit=max_retries_on_rate_limit,
+                                  sleep_interval_on_rate_limit=sleep_interval_on_rate_limit)
             last_digest_refresh_timestamp = time.monotonic()
 
             digest_refresh_duration = timedelta(seconds=last_digest_refresh_timestamp - digest_refresh_start)

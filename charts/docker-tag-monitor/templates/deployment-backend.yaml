@@ -62,6 +62,10 @@ spec:
               value: {{ .Values.backend.digestRefreshCooldownInterval }}
             - name: MAX_REQUESTS_PER_SECOND
               value: {{ .Values.backend.maxRequestsPerSecond | quote }}
+            - name: MAX_RETRIES_ON_RATE_LIMIT
+              value: {{ .Values.backend.maxRetriesOnRateLimit | quote }}
+            - name: SLEEP_INTERVAL_ON_RATE_LIMIT
+              value: {{ .Values.backend.sleepIntervalOnRateLimit }}
           args:
             - "python"
             - "/app/update_database.py"
