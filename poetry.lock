@@ -536,28 +536,6 @@ files = [
 ]
 
 [[package]]
-name = "fastapi"
-version = "0.116.1"
-description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "fastapi-0.116.1-py3-none-any.whl", hash = "sha256:c46ac7c312df840f0c9e220f7964bada936781bc4e2e6eb71f1c4d7553786565"},
-    {file = "fastapi-0.116.1.tar.gz", hash = "sha256:ed52cbf946abfd70c5a0dccb24673f0670deeb517a88b3544d03c2a6bf283143"},
-]
-
-[package.dependencies]
-pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<2.0.0 || >2.0.0,<2.0.1 || >2.0.1,<2.1.0 || >2.1.0,<3.0.0"
-starlette = ">=0.40.0,<0.48.0"
-typing-extensions = ">=4.8.0"
-
-[package.extras]
-all = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.8)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=3.1.5)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.18)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
-standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.8)", "httpx (>=0.23.0)", "jinja2 (>=3.1.5)", "python-multipart (>=0.0.18)", "uvicorn[standard] (>=0.12.0)"]
-standard-no-fastapi-cloud-cli = ["email-validator (>=2.0.0)", "fastapi-cli[standard-no-fastapi-cloud-cli] (>=0.0.8)", "httpx (>=0.23.0)", "jinja2 (>=3.1.5)", "python-multipart (>=0.0.18)", "uvicorn[standard] (>=0.12.0)"]
-
-[[package]]
 name = "frozenlist"
 version = "1.7.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -936,24 +914,6 @@ files = [
 
 [package.extras]
 all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
-
-[[package]]
-name = "jinja2"
-version = "3.1.6"
-description = "A very fast and expressive template engine."
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
-    {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
-]
-
-[package.dependencies]
-MarkupSafe = ">=2.0"
-
-[package.extras]
-i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "mako"
@@ -1346,6 +1306,7 @@ description = "Cross-platform lib for process and system monitoring in Python.  
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
+markers = "sys_platform == \"win32\""
 files = [
     {file = "psutil-7.0.0-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:101d71dc322e3cffd7cea0650b09b3d08b8e7c4109dd6809fe452dfd00e58b25"},
     {file = "psutil-7.0.0-cp36-abi3-macosx_11_0_arm64.whl", hash = "sha256:39db632f6bb862eeccf56660871433e111b6ea58f2caea825571951d4b6aa3da"},
@@ -1824,35 +1785,37 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (>=20.0.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "reflex"
-version = "0.7.14"
+version = "0.8.12"
 description = "Web apps in pure Python."
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "reflex-0.7.14-py3-none-any.whl", hash = "sha256:7b1e0e37a88e9129aa896c5a47c212a29c620fa2e82148813cd335c172974948"},
-    {file = "reflex-0.7.14.tar.gz", hash = "sha256:9a36eee47e60c64630cdc341565416ee838a53ee3c60d281eea0b7887b67f1e3"},
+    {file = "reflex-0.8.12-py3-none-any.whl", hash = "sha256:fadf3322f9b247aa002a5dbe7af55af9c60cbf85f0e14733edc95574409d811e"},
+    {file = "reflex-0.8.12.tar.gz", hash = "sha256:c660bf99d9fc5ed81764c3614b08d52dd355b2c870f9c62ae543bc580559fc58"},
 ]
 
 [package.dependencies]
 alembic = ">=1.15.2,<2.0"
-click = ">=8"
-fastapi = ">=0.115.0"
-granian = {version = ">=2.2.5", extras = ["reload"]}
-httpx = ">=0.28.0,<1.0"
-jinja2 = ">=3.1.2,<4.0"
+click = ">=8.2"
+granian = {version = ">=2.4.0", extras = ["reload"]}
+httpx = ">=0.23.3,<1.0"
 packaging = ">=24.2,<26"
 platformdirs = ">=4.3.7,<5.0"
-psutil = ">=7.0.0,<8.0"
+psutil = {version = ">=7.0.0,<8.0", markers = "sys_platform == \"win32\""}
 pydantic = ">=1.10.21,<3.0"
 python-multipart = ">=0.0.20,<1.0"
 python-socketio = ">=5.12.0,<6.0"
 redis = ">=5.2.1,<7.0"
-reflex-hosting-cli = ">=0.1.47"
+reflex-hosting-cli = ">=0.1.55"
 rich = ">=13,<15"
 sqlmodel = ">=0.0.24,<0.1"
+starlette = ">=0.47.0"
 typing-extensions = ">=4.13.0"
 wrapt = ">=1.17.0,<2.0"
+
+[package.extras]
+monitoring = ["pyleak (>=0.1.14,<1.0)"]
 
 [[package]]
 name = "reflex-hosting-cli"
@@ -2504,4 +2467,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "453c7ac6d47fa53e9e058125c922c3f5e8183e4c291911d19f1caa692f0ff5f8"
+content-hash = "3cabfe2da0b22ea44e02acc40e5280386e622fd2b4e5c20d58ea5cc02030a5a9"
