@@ -18,7 +18,7 @@ from sqlmodel import delete, select, func
 
 import database_update.dockerhub_scraper as dockerhub_scraper
 from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution, ScrapedImage
-from docker_tag_monitor.utils import get_all_image_tags, configure_client
+from docker_tag_monitor.utils import get_all_image_tags, configure_and_reset_client
 
 logger = logging.getLogger("DatabaseUpdater")
 
@@ -70,12 +70,12 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
     job_execution = BackgroundJobExecution(started=datetime.now(ZoneInfo('UTC')), successful_queries=0,
                                            failed_queries=0)
     async with DockerRegistryClientAsync() as registry_client:
-        await configure_client(registry_client)
+        await configure_and_reset_client(registry_client)
         with rx.session() as session:
             query = ImageToScrape.select()
             images_to_scrape = []
 
-            async def reset_registry_tokens_and_repeat_query_if_tokens_expired(
+            async def reset_registry_tokens_if_tokens_expired(
                     results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
                 result_indices_with_invalid_token = []
                 for i, res_tuple in enumerate(results):
@@ -83,52 +83,43 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
                     if res is not None and not res.result and res.client_response.status == 401:
                         result_indices_with_invalid_token.append(i)
                 if result_indices_with_invalid_token:
-                    registry_client.tokens.clear()  # force registry_client to re-generate tokens
-                    # The effect of the call that configure_client() makes to
-                    # registry_client.add_auth_token_json_kwargs() is lost when calling registry_client.tokens.clear(),
-                    # so we need to call it again
-                    await configure_client(registry_client)
-                    for i in result_indices_with_invalid_token:
-                        results[i] = await fetch_digest(results[i][0])
-                        img_to_scrape = results[i][0]
-                        refetched_result = results[i][1]
-                        if refetched_result and not refetched_result.result:
-                            logger.warning(
-                                f"Failed to refresh digest (due to invalid auth token) for image "
-                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}'; "
-                                f"Status code={refetched_result.client_response.status}; "
-                                f"headers={refetched_result.client_response.headers}")
+                    await configure_and_reset_client(registry_client)
 
-            async def repeat_query_on_hitting_rate_limit_or_server_error(
+            async def repeat_query_on_hitting_rate_limit_or_server_error_or_auth_issue(
                     results: list[Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]]):
-                results_affected_by_rate_limit = False
+                results_are_affected = False
 
                 for i, res_tuple in enumerate(results):
                     img_to_scrape, res = res_tuple
-                    if res is None or res.client_response.status in (429, 500):
-                        results_affected_by_rate_limit = True
+                    if res is None or res.client_response.status in (401, 429, 500):
+                        results_are_affected = True
 
+                        refetch_successful = False
+                        refetch_logs = ""
                         for retry_count in range(max_retries_on_rate_limit):
                             await asyncio.sleep(sleep_interval_on_rate_limit.total_seconds())
                             image_name = get_gcr_mirror_image_if_possible(img_to_scrape, retry_count)
                             _, refetched_result = await fetch_digest(img_to_scrape, override_image_name=image_name)
                             if refetched_result is not None and refetched_result.client_response.status in (200, 404):
                                 results[i] = (img_to_scrape, refetched_result)
+                                refetch_successful = True
                                 break
+                            if refetched_result is not None and refetched_result.client_response.status == 401:
+                                await configure_and_reset_client(registry_client)
 
-                if results_affected_by_rate_limit:
+                            refetch_logs += (f"Retry {retry_count + 1} for image "
+                                             f"{image_name} failed with {refetched_result.client_response.status
+                                             if refetched_result else 'no response'}; ")
+
+                        if not refetch_successful:
+                            logger.warning(
+                                f"Failed to refresh digest for image "
+                                f"'{img_to_scrape.endpoint}/{img_to_scrape.image}:{img_to_scrape.tag}' "
+                                f"after {max_retries_on_rate_limit} retries: {refetch_logs}")
+
+                if results_are_affected:
                     await asyncio.sleep(digest_refresh_cooldown_interval.total_seconds())
-                    registry_client.tokens.clear()  # force re-generation of tokens, they likely expired after waiting
-                    # The effect of the call that configure_client() makes to
-                    # registry_client.add_auth_token_json_kwargs() is lost when calling registry_client.tokens.clear(),
-                    # so we need to call it again
-                    await configure_client(registry_client)
-
-                result_indices_indicating_rate_limit = []
-                for i, res_tuple in enumerate(results):
-                    _img_to_scrape, res = res_tuple
-                    if res is not None and res.client_response.status == 429:
-                        result_indices_indicating_rate_limit.append(i)
+                    await configure_and_reset_client(registry_client)
 
             async def fetch_digest(img_to_scrape: ImageToScrape, override_image_name: Optional[ImageName] = None) \
                     -> Tuple[ImageToScrape, Optional[DockerRegistryClientAsyncHeadManifest]]:
@@ -140,7 +131,8 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
                 except aiohttp.ClientError as e:
                     # Note: aside from actual connection issues (where the HTTP request does not complete at all),
                     # a ClientError is also raised by DockerRegistryClientAsync when the HTTP request that retrieves the
-                    # auth token fails (e.g. with status code 429)!
+                    # auth token fails (e.g. due to an invalid content-type response header causing
+                    # client_response.json() in DockerRegistryClientAsync._get_auth_token() to fail)!
                     if isinstance(e, aiohttp.ServerDisconnectedError | aiohttp.ServerTimeoutError):
                         try:
                             result = await http_request_limiter.wrap(registry_client.head_manifest(image_name))
@@ -201,15 +193,15 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
                 images_to_scrape.append(image_to_scrape)
                 if len(images_to_scrape) == batch_size:
                     results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
-                    await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
-                    await repeat_query_on_hitting_rate_limit_or_server_error(results)
+                    await reset_registry_tokens_if_tokens_expired(results)
+                    await repeat_query_on_hitting_rate_limit_or_server_error_or_auth_issue(results)
                     await update_database_entries(results)
                     images_to_scrape = []
 
             if images_to_scrape:  # batch size has not been reached, but there are still some images left to process
                 results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
-                await reset_registry_tokens_and_repeat_query_if_tokens_expired(results)
-                await repeat_query_on_hitting_rate_limit_or_server_error(results)
+                await reset_registry_tokens_if_tokens_expired(results)
+                await repeat_query_on_hitting_rate_limit_or_server_error_or_auth_issue(results)
                 await update_database_entries(results)
 
             job_execution.completed = datetime.now(ZoneInfo('UTC'))
@@ -238,7 +230,7 @@ async def monitor_new_tags():
     """
     logger.info("Checking whether we need to monitor new tags")
     async with DockerRegistryClientAsync() as registry_client:
-        await configure_client(registry_client)
+        await configure_and_reset_client(registry_client)
         with rx.session() as session:
             # Fill the scraped_image table with missing rows (each row is a unique (endpoint, image) pair from the
             # image_to_scrape table, with an additional known_tags string-array column)
