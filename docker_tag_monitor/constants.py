@@ -8,7 +8,7 @@ GITHUB_STARS_REFRESH_INTERVAL_SECONDS = 3600
 
 ORDERED_PAGE_ROUTES = [  # Note: keep these in sync with the "@template(route=...)" decorators
     "/",
-    "/details/[...image_name]",
+    "/details/[[...splat]]",
     "/status",
 ]
 

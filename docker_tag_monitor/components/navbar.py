@@ -2,7 +2,7 @@ import reflex as rx
 
 from docker_tag_monitor import styles
 from docker_tag_monitor.components.github_button import github_button
-from docker_tag_monitor.constants import ORDERED_PAGE_ROUTES
+from docker_tag_monitor.decorated_pages import decorated_pages_manual_list
 
 
 def menu_item_icon(icon: str) -> rx.Component:
@@ -20,12 +20,15 @@ def menu_item(text: str, url: str) -> rx.Component:
         rx.Component: The menu item component.
     """
     # Whether the item is active.
-
     active = (rx.State.router.page.path == url.lower()) | (
-            (rx.State.router.page.path == "/") & text == "Overview"
+            (rx.State.router.page.path == "/index") & text == "Overview"
     )
 
-    show_item = (url.lower() != "/details/[...image_name]") | (rx.State.router.page.path == "/details/[...image_name]")
+    # Note: if Reflex v0.9.x really deprecates rx.State.router.page, we are fucked. rx.State.router.page.path
+    # used to return e.g. "/details/[[...splat]]", but with it no longer being available in v0.9.x, we can only use
+    # rx.State.router.url, but it contains the full URL incl. domain, query parameters etc. (and there is no regex
+    # compare function for the frontend).
+    show_item = (url.lower() != "/details/[[...splat]]") | (rx.State.router.page.path == "/details/[[...splat]]")
 
     return rx.link(
         rx.hstack(
@@ -73,7 +76,7 @@ def menu_item(text: str, url: str) -> rx.Component:
             padding="0.35em",
         ),
         underline="none",
-        href=rx.cond(url.lower() != "/details/[...image_name]", url, "#"),
+        href=rx.cond(url.lower() != "/details/[[...splat]]", url, "#"),
         width="100%",
     )
 
@@ -96,15 +99,6 @@ def navbar_footer() -> rx.Component:
 
 
 def menu_button() -> rx.Component:
-    from reflex.page import get_decorated_pages
-
-    pages = get_decorated_pages()
-
-    ordered_pages = sorted(
-        pages,
-        key=lambda page: ORDERED_PAGE_ROUTES.index(page["route"]),
-    )
-
     return rx.drawer.root(
         rx.drawer.trigger(
             rx.icon("align-justify"),
@@ -127,7 +121,7 @@ def menu_button() -> rx.Component:
                             ),
                             url=page["route"],
                         )
-                        for page in ordered_pages
+                        for page in decorated_pages_manual_list
                     ],
                     rx.spacer(),
                     navbar_footer(),

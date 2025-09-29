@@ -7,7 +7,7 @@ from ..main_template import template
 from ..state import ImageDetailsState
 
 
-@template(route="/details/[...image_name]", title="Image details", on_load=ImageDetailsState.on_page_load)
+@template(route="/details/[[...splat]]", title="Image details", on_load=ImageDetailsState.on_page_load)
 def index() -> rx.Component:
     return rx.vstack(
         rx.center(

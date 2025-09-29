@@ -14,8 +14,11 @@ RUN $POETRY_VENV/bin/poetry install --no-cache
 # Download Node.js
 RUN reflex init --template blank
 COPY . .
-# Note: we also remove the largest folders inside the .web folder, because we don't need them in backend image
-RUN reflex export --frontend-only --no-zip && rm -rf .web/node_modules .web/.next
+
+FROM builder AS frontend-builder
+RUN reflex export --frontend-only --no-zip
+
+FROM builder AS backend-symlink-fix
 # The "reflex" command is an executable script with a shebang to /app/.venv/bin/python, which itself is a symlink to
 # /usr/local/bin/python (in the official python:... image). However, the ubuntu/python image we use at run-time does
 # have the Python binary at this path, but instead it resides at /usr/bin/python3. We therefore remove the symlink
@@ -32,7 +35,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV TZ="UTC"
 EXPOSE 8000
-COPY --from=builder /app /app
+COPY --from=backend-symlink-fix /app /app
 
 # Needed until Reflex properly passes SIGTERM on backend.
 STOPSIGNAL SIGKILL
@@ -45,5 +48,5 @@ ENTRYPOINT []
 CMD reflex db migrate && exec reflex run --env prod --backend-only
 
 FROM caddy:2.10.2 AS frontend
-COPY --from=builder /app/.web/_static /srv
+COPY --from=builder /app/.web/build/client /srv
 COPY Caddyfile /etc/caddy/Caddyfile

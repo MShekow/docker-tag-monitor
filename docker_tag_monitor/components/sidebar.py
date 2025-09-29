@@ -4,7 +4,7 @@ from .. import styles
 
 import reflex as rx
 
-from ..constants import ORDERED_PAGE_ROUTES
+from ..decorated_pages import decorated_pages_manual_list
 
 
 def sidebar_header() -> rx.Component:
@@ -60,10 +60,10 @@ def sidebar_item(text: str, url: str) -> rx.Component:
     """
     # Whether the item is active.
     active = (rx.State.router.page.path == url.lower()) | (
-            (rx.State.router.page.path == "/") & text == "Overview"
+            (rx.State.router.page.path == "/index") & text == "Overview"
     )
 
-    show_item = (url.lower() != "/details/[...image_name]") | (rx.State.router.page.path == "/details/[...image_name]")
+    show_item = (url.lower() != "/details/[[...splat]]") | (rx.State.router.page.path == "/details/[[...splat]]")
 
     return rx.link(
         rx.hstack(
@@ -107,7 +107,7 @@ def sidebar_item(text: str, url: str) -> rx.Component:
             padding="0.35em",
         ),
         underline="none",
-        href=rx.cond(url.lower() != "/details/[...image_name]", url, "#"),
+        href=rx.cond(url.lower() != "/details/[[...splat]]", url, "#"),
         display=rx.cond(
             show_item,
             "flex", "none",
@@ -122,16 +122,6 @@ def sidebar() -> rx.Component:
     Returns:
         The sidebar component.
     """
-    from reflex.page import get_decorated_pages
-
-    pages = get_decorated_pages()
-
-    # Include all pages even if they are not in the ordered_page_routes.
-    ordered_pages = sorted(
-        pages,
-        key=lambda page: (ORDERED_PAGE_ROUTES.index(page["route"])),
-    )
-
     return rx.flex(
         rx.vstack(
             sidebar_header(),
@@ -141,7 +131,7 @@ def sidebar() -> rx.Component:
                         text=page.get("title"),
                         url=page["route"],
                     )
-                    for page in ordered_pages
+                    for page in decorated_pages_manual_list
                 ],
                 spacing="1",
                 width="100%",

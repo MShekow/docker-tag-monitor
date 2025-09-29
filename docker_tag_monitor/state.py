@@ -22,7 +22,7 @@ from .utils import images_exists_in_registry, add_selected_tags_to_monitoring_db
 
 
 class OverviewTableState(rx.State):
-    items: rx.Field[list[ImageToScrapeWithCount]] = rx.field([])
+    items: rx.Field[list[ImageToScrapeWithCount]] = rx.field(default_factory=list)
 
     total_items: int = 0
     offset: int = 0
@@ -129,6 +129,8 @@ POSTGRESQL_AGGREGATION_INTERVALS = {  # maps the "aggregation_interval" from the
     "monthly": "month",
 }
 
+IMAGE_DETAILS_PATH_PREFIX = "/details/"
+
 
 class ImageDetailsState(rx.State):
     error: bool = False
@@ -137,9 +139,9 @@ class ImageDetailsState(rx.State):
     non_existent_image: bool = False
     image_to_scrape: Optional[ImageToScrape] = None
 
-    digest_items: rx.Field[list[ImageUpdate]] = rx.field([])
-    _digest_updates_aggregated: rx.Field[list[ImageUpdateAggregated]] = rx.field([])  # not sent to the UI
-    digest_updates_graph_data: rx.Field[list[ImageUpdateGraphData]] = rx.field([])
+    digest_items: rx.Field[list[ImageUpdate]] = rx.field(default_factory=list)
+    _digest_updates_aggregated: list[ImageUpdateAggregated] = []  # not sent to the UI
+    digest_updates_graph_data: rx.Field[list[ImageUpdateGraphData]] = rx.field(default_factory=list)
 
     total_items: int = 0
     offset: int = 0
@@ -275,13 +277,13 @@ class ImageDetailsState(rx.State):
         yield  # send the update to the UI immediately(!)
 
         try:
-            image_segments_from_url: Optional[list[str]] = self.router.page.params.get("image_name", None)
+            path: Optional[str] = self.router.url.path  # e.g. "/details/index.docker.io/library/busybox:latest"
 
-            if not image_segments_from_url:
+            if not path or not path.startswith(IMAGE_DETAILS_PATH_PREFIX):
                 self.error = True
                 return
 
-            image_name_str = "/".join(image_segments_from_url)
+            image_name_str = path[len(IMAGE_DETAILS_PATH_PREFIX):]  # e.g. "index.docker.io/library/busybox:latest"
 
             try:
                 image_name = ImageName.parse(image_name_str)
@@ -350,8 +352,8 @@ class ImageTagField(rx.Base):
 class AddAdditionalTagsState(rx.State):
     view_state: str = "show_button"  # alternatives: "show_form", "show_result"
     loading: bool = False
-    _image_tags: rx.Field[list[tuple[str, bool]]] = rx.field([])
-    shown_image_tag_fields: rx.Field[list[ImageTagField]] = rx.field([])
+    _image_tags: list[tuple[str, bool]] = []
+    shown_image_tag_fields: rx.Field[list[ImageTagField]] = rx.field(default_factory=list)
     select_unselect_all_checked: bool = True
     extra_search_result_count: int = 0
     search_string: str = ""
@@ -442,7 +444,7 @@ class SearchState(rx.State):
     search_string: str = ""
     error: bool = False
     unknown_image: bool = False
-    search_results: rx.Field[list[ImageToScrape]] = rx.field([])
+    search_results: rx.Field[list[ImageToScrape]] = rx.field(default_factory=list)
 
     def clear_search(self):
         self.validate_and_search("")
@@ -518,8 +520,8 @@ class NavbarState(rx.State):
 
 
 class StatusState(rx.State):
-    daily_scan_summary_graph_data: rx.Field[list[DailyScanSummary]] = rx.field([])
-    daily_scan_duration_graph_data: rx.Field[list[DailyScanDuration]] = rx.field([])
+    daily_scan_summary_graph_data: rx.Field[list[DailyScanSummary]] = rx.field(default_factory=list)
+    daily_scan_duration_graph_data: rx.Field[list[DailyScanDuration]] = rx.field(default_factory=list)
 
     def load_data(self):
         self.daily_scan_summary_graph_data.clear()
