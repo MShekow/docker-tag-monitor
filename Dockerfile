@@ -16,7 +16,14 @@ RUN reflex init --template blank
 COPY . .
 
 FROM builder AS frontend-builder
-RUN reflex export --frontend-only --no-zip
+# Workaround for https://github.com/reflex-dev/reflex/issues/5832 - the following 4 lines can be removed once the bug is fixed
+ARG NODE_VERSION=24
+# This installs NVM and Node in one command
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+ENV NVM_DIR=/root/.nvm
+
+# Once the above workaround is no longer needed, we can strip the ". $NVM_DIR/nvm.sh && " from the following line
+RUN . $NVM_DIR/nvm.sh && reflex export --frontend-only --no-zip
 
 FROM builder AS backend-symlink-fix
 # The "reflex" command is an executable script with a shebang to /app/.venv/bin/python, which itself is a symlink to
@@ -35,7 +42,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV TZ="UTC"
 EXPOSE 8000
-COPY --from=backend-symlink-fix /app /app
+# Note: "_daemon_" is a pre-created non-root user in the ubuntu/python image which needs to be able to write to /app, or the backend won't start
+COPY --from=backend-symlink-fix --chown=_daemon_ /app /app
 
 # Needed until Reflex properly passes SIGTERM on backend.
 STOPSIGNAL SIGKILL
@@ -48,5 +56,5 @@ ENTRYPOINT []
 CMD reflex db migrate && exec reflex run --env prod --backend-only
 
 FROM caddy:2.10.2 AS frontend
-COPY --from=builder /app/.web/build/client /srv
+COPY --from=frontend-builder /app/.web/build/client /srv
 COPY Caddyfile /etc/caddy/Caddyfile
