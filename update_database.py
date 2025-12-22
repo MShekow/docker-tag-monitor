@@ -38,9 +38,9 @@ async def update_popular_images_to_scrape():
 
     with rx.session() as session:
         for image_to_scrape in images_to_scrape:
-            query = ImageToScrape.select().where(ImageToScrape.endpoint == image_to_scrape.endpoint,
-                                                 ImageToScrape.image == image_to_scrape.image,
-                                                 ImageToScrape.tag == image_to_scrape.tag)
+            query = select(ImageToScrape).where(ImageToScrape.endpoint == image_to_scrape.endpoint,
+                                                ImageToScrape.image == image_to_scrape.image,
+                                                ImageToScrape.tag == image_to_scrape.tag)
             database_object = session.exec(query).first()
             if database_object is None:
                 try:
@@ -72,7 +72,6 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
     async with DockerRegistryClientAsync() as registry_client:
         await configure_and_reset_client(registry_client)
         with rx.session() as session:
-            query = ImageToScrape.select()
             images_to_scrape = []
 
             async def reset_registry_tokens_if_tokens_expired(
@@ -153,7 +152,7 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
 
                     digest_was_found_in_registry = result.result
                     if digest_was_found_in_registry:
-                        query = ImageUpdate.select().where(ImageUpdate.image_id == img_to_scrape.id).order_by(
+                        query = select(ImageUpdate).where(ImageUpdate.image_id == img_to_scrape.id).order_by(
                             ImageUpdate.scraped_at.desc())
                         last_update = session.exec(query).first()
                         if last_update is None or last_update.digest != result.digest:
@@ -189,7 +188,7 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
                                 f"headers={result.client_response.headers}")
 
             batch_size = 10
-            for image_to_scrape in session.exec(query):
+            for image_to_scrape in session.exec(select(ImageToScrape)):
                 images_to_scrape.append(image_to_scrape)
                 if len(images_to_scrape) == batch_size:
                     results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
@@ -248,7 +247,7 @@ async def monitor_new_tags():
             updated_images = 0
             updated_tags = 0
 
-            for scraped_image in session.exec(ScrapedImage.select()):
+            for scraped_image in session.exec(select(ScrapedImage)):
                 image_name = ImageName.parse(f"{scraped_image.endpoint}/{scraped_image.image}")
                 try:
                     all_tags = await http_request_limiter.wrap(get_all_image_tags(image_name, client=registry_client))
@@ -260,9 +259,9 @@ async def monitor_new_tags():
                     for tag_to_monitor in tags_to_monitor:
                         # Only add the ImageToScrape if it does not already exist (e.g. added manually by a user).
                         # Otherwise, we would get a SQL unique constraint violation in the ImageToScrape table!
-                        existing_query = ImageToScrape.select().where(ImageToScrape.endpoint == scraped_image.endpoint,
-                                                                      ImageToScrape.image == scraped_image.image,
-                                                                      ImageToScrape.tag == tag_to_monitor)
+                        existing_query = select(ImageToScrape).where(ImageToScrape.endpoint == scraped_image.endpoint,
+                                                                     ImageToScrape.image == scraped_image.image,
+                                                                     ImageToScrape.tag == tag_to_monitor)
                         existing_image_to_scrape = session.exec(existing_query).first()
                         if existing_image_to_scrape is None:
                             image_to_scrape = ImageToScrape(endpoint=scraped_image.endpoint, image=scraped_image.image,

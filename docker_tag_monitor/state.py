@@ -1,6 +1,7 @@
 import fnmatch
 import re
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -65,21 +66,18 @@ class OverviewTableState(rx.State):
         # this error when trying to call strftime on the item["added_at"] datetime object:
         # TypeError: You must provide an annotation for the state var `item["added_at"]`.
         # Annotation cannot be `typing.Any`
-        query = text("""SELECT
-            image_to_scrape.endpoint,
-            image_to_scrape.image,
-            image_to_scrape.tag,
-            TO_CHAR(image_to_scrape.added_at, 'YYYY-MM-DD') AS added_at,
-            COUNT(image_update.id) AS image_update_count
-        FROM
-            image_to_scrape
-        LEFT JOIN
-            image_update ON image_to_scrape.id = image_update.image_id
-        GROUP BY
-            image_to_scrape.endpoint, image_to_scrape.image, image_to_scrape.tag, image_to_scrape.added_at
-        ORDER BY
-            image_update_count DESC
-        LIMIT :limit OFFSET :offset;""")
+        query = text("""SELECT image_to_scrape.endpoint,
+                               image_to_scrape.image,
+                               image_to_scrape.tag,
+                               TO_CHAR(image_to_scrape.added_at, 'YYYY-MM-DD') AS added_at,
+                               COUNT(image_update.id)                          AS image_update_count
+                        FROM image_to_scrape
+                                 LEFT JOIN
+                             image_update ON image_to_scrape.id = image_update.image_id
+                        GROUP BY image_to_scrape.endpoint, image_to_scrape.image, image_to_scrape.tag,
+                                 image_to_scrape.added_at
+                        ORDER BY image_update_count DESC LIMIT :limit
+                        OFFSET :offset;""")
 
         args = {
             "limit": self.items_per_page,
@@ -192,7 +190,7 @@ class ImageDetailsState(rx.State):
 
     def load_digest_table_data_for_page(self):
         with rx.session() as session:
-            select_query = ImageUpdate.select().where(ImageUpdate.image_id == self.image_to_scrape.id).offset(
+            select_query = select(ImageUpdate).where(ImageUpdate.image_id == self.image_to_scrape.id).offset(
                 self.offset).limit(self.items_per_page).order_by(ImageUpdate.scraped_at.desc())
             self.digest_items = session.exec(select_query).all()
 
@@ -207,17 +205,12 @@ class ImageDetailsState(rx.State):
             self._digest_updates_aggregated.clear()
             self.digest_updates_graph_data.clear()
 
-            query = text("""SELECT
-                DATE_TRUNC(:aggregation_interval, scraped_at) AS interval_start,
-                COUNT(*) AS item_count
-            FROM
-                image_update
-            WHERE
-                image_id = :image_id
-            GROUP BY
-                interval_start
-            ORDER BY
-                interval_start DESC;""")
+            query = text("""SELECT DATE_TRUNC(:aggregation_interval, scraped_at) AS interval_start,
+                                   COUNT(*)                                      AS item_count
+                            FROM image_update
+                            WHERE image_id = :image_id
+                            GROUP BY interval_start
+                            ORDER BY interval_start DESC;""")
 
             postgresql_aggregation_interval = POSTGRESQL_AGGREGATION_INTERVALS[self.aggregation_interval]
             args = {
@@ -297,9 +290,9 @@ class ImageDetailsState(rx.State):
             resolved_tag = image_name.resolve_tag()
 
             with rx.session() as session:
-                query = ImageToScrape.select().where(ImageToScrape.endpoint == resolved_registry,
-                                                     ImageToScrape.image == resolved_image,
-                                                     ImageToScrape.tag == resolved_tag)
+                query = select(ImageToScrape).where(ImageToScrape.endpoint == resolved_registry,
+                                                    ImageToScrape.image == resolved_image,
+                                                    ImageToScrape.tag == resolved_tag)
                 image_to_scrape: Optional[ImageToScrape] = session.exec(query).first()
                 if image_to_scrape is None:
                     if not await images_exists_in_registry([image_name]):
@@ -343,7 +336,8 @@ class ImageDetailsState(rx.State):
             self.loading = False
 
 
-class ImageTagField(rx.Base):
+@dataclass
+class ImageTagField:
     tag: str
     can_add_to_monitoring_db: bool
     checked: bool
@@ -531,41 +525,43 @@ class StatusState(rx.State):
         # -  the day
         # - number of BackgroundJobExecutions where failed_queries is 0 and successful_queries > 0
         # - number of BackgroundJobExecutions where either successful_queries is 0 or failed_queries > 0
-        summary_query = text("""WITH date_series AS (
-                SELECT generate_series(
-                               (SELECT MIN(DATE_TRUNC('day', started)) FROM background_job_execution),
-                               (SELECT MAX(DATE_TRUNC('day', started)) FROM background_job_execution),
-                               '1 day'::interval
-                       )::date AS day
-            )
-            SELECT
-                date_series.day,
-                COALESCE(SUM(CASE WHEN background_job_execution.failed_queries = 0 AND background_job_execution.successful_queries > 0 THEN 1 ELSE 0 END), 0) AS successful_scans,
-                COALESCE(SUM(CASE WHEN background_job_execution.successful_queries = 0 OR background_job_execution.failed_queries > 0 THEN 1 ELSE 0 END), 0) AS failed_scans
-            FROM date_series LEFT JOIN background_job_execution ON
-                    DATE_TRUNC('day', background_job_execution.started) = date_series.day
-            GROUP BY date_series.day
-            ORDER BY date_series.day DESC
-            LIMIT :limit""")
+        summary_query = text("""WITH date_series AS (SELECT generate_series(
+                                                                    (SELECT MIN(DATE_TRUNC('day', started))
+                                                                     FROM background_job_execution),
+                                                                    (SELECT MAX(DATE_TRUNC('day', started))
+                                                                     FROM background_job_execution),
+                                                                    '1 day'::interval
+                                                            ) ::date AS day
+                                    )
+        SELECT date_series.day,
+               COALESCE(SUM(CASE
+                                WHEN background_job_execution.failed_queries = 0 AND
+                                     background_job_execution.successful_queries > 0 THEN 1
+                                ELSE 0 END), 0) AS successful_scans,
+               COALESCE(SUM(CASE
+                                WHEN background_job_execution.successful_queries = 0 OR
+                                     background_job_execution.failed_queries > 0 THEN 1
+                                ELSE 0 END), 0) AS failed_scans
+        FROM date_series
+                 LEFT JOIN background_job_execution ON
+            DATE_TRUNC('day', background_job_execution.started) = date_series.day
+        GROUP BY date_series.day
+        ORDER BY date_series.day DESC LIMIT :limit""")
 
-        scan_duration_query = text("""WITH date_series AS (
-                SELECT 
-                    generate_series(
-                        (SELECT MIN(DATE(started)) FROM background_job_execution),
-                        (SELECT MAX(DATE(completed)) FROM background_job_execution),
-                        INTERVAL '1 day'
-                    )::date AS execution_date
-            )
-            SELECT 
-                ds.execution_date,
-                COALESCE(AVG(EXTRACT(EPOCH FROM (bje.completed - bje.started))), 0) AS average_duration_seconds
-            FROM 
-                date_series ds
-            LEFT JOIN 
-                background_job_execution bje ON DATE(bje.started) = ds.execution_date
-            GROUP BY ds.execution_date
-            ORDER BY ds.execution_date DESC
-            LIMIT :limit""")
+        scan_duration_query = text("""WITH date_series AS (SELECT generate_series(
+                                                                          (SELECT MIN(DATE (started)) FROM background_job_execution),
+                                                                          (SELECT MAX(DATE (completed)) FROM background_job_execution),
+                                                                          INTERVAL '1 day'
+                                                                  ) ::date AS execution_date)
+                                      SELECT ds.execution_date,
+                                             COALESCE(AVG(EXTRACT(EPOCH FROM (bje.completed - bje.started))),
+                                                      0) AS average_duration_seconds
+                                      FROM date_series ds
+                                               LEFT JOIN
+                                           background_job_execution bje ON DATE (bje.started) = ds.execution_date
+                                      GROUP BY ds.execution_date
+                                      ORDER BY ds.execution_date DESC
+                                          LIMIT :limit""")
 
         with rx.session() as session:
             for row in session.exec(summary_query, params={"limit": MAX_DAILY_SCAN_ENTRIES_IN_GRAPH}):

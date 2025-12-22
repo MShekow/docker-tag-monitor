@@ -7,7 +7,7 @@ from typing import Optional
 import reflex as rx
 from aiohttp import ContentTypeError, ClientResponseError
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
-from sqlmodel import col
+from sqlmodel import col, select
 
 from docker_tag_monitor.models import ImageToScrape
 
@@ -138,9 +138,9 @@ async def get_additional_image_tags_to_monitor(image_name: ImageName, name_filte
     tags = [tag for tag in tags if tag != image_name.tag]
 
     with rx.session() as session:
-        query = ImageToScrape.select().where(ImageToScrape.endpoint == image_name.endpoint,
-                                             ImageToScrape.image == image_name.image,
-                                             col(ImageToScrape.tag).in_(tags))
+        query = select(ImageToScrape).where(ImageToScrape.endpoint == image_name.endpoint,
+                                            ImageToScrape.image == image_name.image,
+                                            col(ImageToScrape.tag).in_(tags))
         monitored_images_to_scrape: list[ImageToScrape] = session.exec(query).all()  # noqa
 
     monitored_image_tags = set(m.tag for m in monitored_images_to_scrape)
