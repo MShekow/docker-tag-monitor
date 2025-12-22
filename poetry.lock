@@ -584,14 +584,14 @@ test = ["pytest-xdist"]
 
 [[package]]
 name = "durationpy"
-version = "0.9"
+version = "0.10"
 description = "Module for converting between datetime.timedelta and Go's Duration strings."
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "durationpy-0.9-py3-none-any.whl", hash = "sha256:e65359a7af5cedad07fb77a2dd3f390f8eb0b74cb845589fa6c057086834dd38"},
-    {file = "durationpy-0.9.tar.gz", hash = "sha256:fd3feb0a69a0057d582ef643c355c40d2fa1c942191f914d12203b1a01ac722a"},
+    {file = "durationpy-0.10-py3-none-any.whl", hash = "sha256:3b41e1b601234296b4fb368338fdcd3e13e0b4fb5b67345948f4f2bf9868b286"},
+    {file = "durationpy-0.10.tar.gz", hash = "sha256:1fa6893409a6e739c9c72334fc65cca1f355dbdd93405d30f726deb5bde42fba"},
 ]
 
 [[package]]
@@ -2691,4 +2691,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "e703c71b842570a293c126ec586978ec22d6e92ea2fcc2ec415a4dffd6de9b43"
+content-hash = "cf3bec6c4f3fd7cd52e8adddc4eb844043aa48f44a4c19ef42317e6112139353"
