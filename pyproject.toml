@@ -12,7 +12,7 @@ python = "^3.12"
 reflex = {version = "0.8.23", extras = ["db"]}
 requests = "2.32.5"
 docker-registry-client-async = "1.0.3"
-psycopg = {version = "3.2.6", extras = ["binary"]}
-durationpy = "0.9"
+psycopg = {version = "3.3.2", extras = ["binary"]}
+durationpy = "0.10"
 python-dateutil = "2.9.0.post0"
 asynciolimiter = "1.2.0"
