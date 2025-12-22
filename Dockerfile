@@ -16,14 +16,7 @@ RUN reflex init --template blank
 COPY . .
 
 FROM builder AS frontend-builder
-# Workaround for https://github.com/reflex-dev/reflex/issues/5832 - the following 4 lines can be removed once the bug is fixed
-ARG NODE_VERSION=24
-# This installs NVM and Node in one command
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-ENV NVM_DIR=/root/.nvm
-
-# Once the above workaround is no longer needed, we can strip the ". $NVM_DIR/nvm.sh && " from the following line
-RUN . $NVM_DIR/nvm.sh && reflex export --frontend-only --no-zip
+RUN reflex export --frontend-only --no-zip
 
 FROM builder AS backend-symlink-fix
 # The "reflex" command is an executable script with a shebang to /app/.venv/bin/python, which itself is a symlink to
