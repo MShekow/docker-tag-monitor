@@ -43,6 +43,9 @@ class ImageToScrape(sqlmodel.SQLModel, table=True):
         sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now(), index=True))
     last_viewed: datetime = sqlmodel.Field(sa_column=sa.Column(sa.DateTime(timezone=True),
                                                                server_default=sa.func.now(), index=True))
+    last_pushed: datetime | None = sqlmodel.Field(default=None,
+                                                  sa_column=sa.Column(sa.DateTime(timezone=True), nullable=True,
+                                                                      index=True))
 
 
 class ImageUpdate(sqlmodel.SQLModel, table=True):

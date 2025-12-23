@@ -19,7 +19,7 @@ from .constants import NAMESPACE_AND_REPO, GITHUB_STARS_REFRESH_INTERVAL_SECONDS
     MAX_DAILY_SCAN_ENTRIES_IN_GRAPH, IMAGE_LAST_VIEWED_UPDATE_THRESHOLD
 from .models import ImageToScrape, ImageUpdate
 from .utils import images_exists_in_registry, add_selected_tags_to_monitoring_db, get_additional_image_tags_to_monitor, \
-    TAGS_PER_IMAGE_MAX_COUNT
+    TAGS_PER_IMAGE_MAX_COUNT, is_image_no_longer_scanned
 
 
 class OverviewTableState(rx.State):
@@ -135,6 +135,7 @@ class ImageDetailsState(rx.State):
     loading: bool = True
     not_found: bool = False
     non_existent_image: bool = False
+    updates_no_longer_scanned: bool = False
     image_to_scrape: Optional[ImageToScrape] = None
 
     digest_items: rx.Field[list[ImageUpdate]] = rx.field(default_factory=list)
@@ -259,6 +260,7 @@ class ImageDetailsState(rx.State):
         self.loading = True
         self.not_found = False
         self.non_existent_image = False
+        self.updates_no_longer_scanned = False
         self.image_to_scrape = None
         self.digest_items.clear()
         self._digest_updates_aggregated.clear()
@@ -328,6 +330,8 @@ class ImageDetailsState(rx.State):
                     self.image_to_scrape.last_viewed = now
                     session.add(self.image_to_scrape)
                     session.commit()
+
+                self.updates_no_longer_scanned = is_image_no_longer_scanned(self.image_to_scrape)
 
                 self.load_digests_updates_graph_data()
 

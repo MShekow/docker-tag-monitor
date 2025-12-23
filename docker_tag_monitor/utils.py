@@ -2,8 +2,12 @@ import asyncio
 import base64
 import logging
 import os
+import re
+from datetime import datetime, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo
 
+import durationpy
 import reflex as rx
 from aiohttp import ContentTypeError, ClientResponseError
 from docker_registry_client_async import ImageName, DockerRegistryClientAsync
@@ -49,6 +53,22 @@ async def images_exists_in_registry(image_names: list[ImageName]) -> bool:
     return True
 
 
+def contains_digest(tag: str, min_segment_length: int = 32) -> bool:
+    """
+    Detects tags containing long sequences of alphanumeric characters that look like
+    digests or hashes (e.g.,
+    "update-available-441cc46cf89f0bc773dc84872ccab6c3b4a81dda7b946087b072f613d81ed106", or Notation/Cosign
+    "sha256-<64-characters-of-the-hash>[.att|.sig|.sbom]" tags).
+    Returns True if the tag contains at least one sequence of `min_length` or more consecutive
+    alphanumeric characters.
+    """
+    # Find all sequences of consecutive alphanumeric characters, e.g., splitting
+    # "1.2-update-available-441cc46cf89f0bc773dc84872ccab6c3b4a81dda7b946087b072f613d81ed106" into
+    # ["1", "2", "update", "available", "441cc46cf89f0bc773dc84872ccab6c3b4a81dda7b946087b072f613d81ed106"]
+    alphanumeric_sequences = re.findall(r'[a-zA-Z0-9]+', tag)
+    return any(len(seq) >= min_segment_length for seq in alphanumeric_sequences)
+
+
 async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegistryClientAsync] = None) -> list[str]:
     close_connection = False
     if client is None:
@@ -78,6 +98,7 @@ async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegis
     It seems that registries like Docker Hub and MCR return ALL tags without enforcing pagination, even if an
     image has thousands of tags.
     """
+    # TODO implement pagination, because e.g. otherwise the OWASP ZAP image hosted on GHCR will not return all tags
     try:
         max_retries = 5
         custom_content_type_header_value = ""
@@ -96,8 +117,9 @@ async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegis
                         (content_type := e.headers["content-type"]) != "application/json":
                     custom_content_type_header_value = content_type
 
-                logger.debug(f"Attempt {attempt + 1}/{max_retries} to get tags for {image_name} failed "
-                             f"with ClientResponseError (trying again ...): {e}")
+                if not custom_content_type_header_value:
+                    logger.debug(f"Attempt {attempt + 1}/{max_retries} to get tags for {image_name} failed "
+                                 f"with ClientResponseError (trying again ...): {e}")
                 await asyncio.sleep(1)
 
                 continue
@@ -109,13 +131,7 @@ async def get_all_image_tags(image_name: ImageName, client: Optional[DockerRegis
             # practical to see the most recent versions first, so we reverse the order
             tags.reverse()
 
-            # Remove tags that point to (Cosign/Notation) signatures or attestations. The naming scheme for such tags is
-            # sha256-<64-characters-of-the-hash>[.att|.sig|.sbom]
-            def is_signature_or_attestation(t: str) -> bool:
-                # 71 = len("sha256-") + 64
-                return len(t) >= 71 and t.startswith("sha256-")
-
-            tags = [t for t in tags if not is_signature_or_attestation(t)]
+            tags = [t for t in tags if not contains_digest(t)]
 
             return tags
 
@@ -165,3 +181,22 @@ async def add_selected_tags_to_monitoring_db(image_name: ImageName, selected_tag
         raise ValueError(f"Database insert failed: {e}")
 
     return True
+
+
+refresh_digest_last_pushed_cutoff: timedelta = durationpy.from_str(
+    os.getenv("REFRESH_DIGEST_LAST_PUSHED_CUTOFF", "6mm"))
+
+
+def is_image_no_longer_scanned(image: ImageToScrape) -> bool:
+    """
+    Determines whether an image is considered "no longer scanned" based on its last pushed date
+    and the configured cutoff duration.
+    """
+    if not image.last_pushed:
+        return False
+
+    if image.tag == "latest":
+        return False
+
+    cutoff_datetime = datetime.now(ZoneInfo('UTC')) - refresh_digest_last_pushed_cutoff
+    return image.last_pushed < cutoff_datetime

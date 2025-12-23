@@ -4,6 +4,8 @@ import os
 import sys
 import time
 from datetime import timedelta, datetime
+from pydantic.v1.datetime_parse import parse_datetime
+import json
 from typing import Optional, Tuple
 from zoneinfo import ZoneInfo
 
@@ -17,8 +19,9 @@ from sqlalchemy.sql import text
 from sqlmodel import delete, select, func
 
 import database_update.dockerhub_scraper as dockerhub_scraper
+from docker_tag_monitor.constants import FILL_LAST_PUSH_DATE_BATCH_SIZE
 from docker_tag_monitor.models import ImageToScrape, ImageUpdate, BackgroundJobExecution, ScrapedImage
-from docker_tag_monitor.utils import get_all_image_tags, configure_and_reset_client
+from docker_tag_monitor.utils import get_all_image_tags, configure_and_reset_client, contains_digest
 
 logger = logging.getLogger("DatabaseUpdater")
 
@@ -53,6 +56,102 @@ async def update_popular_images_to_scrape():
     logger.info(f"Added {new_images} NEW images to scrape to the database")
 
 
+async def get_image_build_date_from_registry(image: ImageToScrape,
+                                             registry_client: DockerRegistryClientAsync) -> Optional[datetime]:
+    """
+    Determines the build date of an image from its config blob. We use the build date as an approximation for the push
+    date, assuming that an image was built and then immediately pushed. This is a fallback for registries other than
+    DockerHub (for DockerHub we can use the DockerHub API to get the tag_last_pushed date directly).
+    Note that some builders do not set the actual date in the config blob, but e.g. set it to "1970-01-01T00:00:00Z"
+    or "0001-01-01T00:00:00Z" - in such cases, we return None.
+    """
+    image_name = ImageName.parse(f"{image.endpoint}/{image.image}:{image.tag}")
+    image_manifest_result = await registry_client.get_manifest(image_name)
+    if (image_manifest_result.manifest.json["mediaType"]
+            in ["application/vnd.oci.image.index.v1+json",
+                "application/vnd.docker.distribution.manifest.list.v2+json"]):
+        # OCI image index (multi-arch image)
+        # Get the build date from the first manifest in the index
+        first_manifest_descriptor = image_manifest_result.manifest.json["manifests"][0]
+        manifest_digest = first_manifest_descriptor["digest"]
+        image_manifest_result = await registry_client.get_manifest(
+            ImageName.parse(f"{image.endpoint}/{image.image}@{manifest_digest}"))
+    else:
+        assert (image_manifest_result.manifest.json["mediaType"]
+                in ["application/vnd.docker.distribution.manifest.v2+json",
+                    "application/vnd.oci.image.manifest.v1+json"]), \
+            f"Invalid media type '{image_manifest_result.manifest.json["mediaType"]}'"
+
+    config_digest = image_manifest_result.manifest.json["config"]["digest"]
+    image_config_result = await registry_client.get_blob(image_name, config_digest)
+    image_config_json = json.loads(image_config_result.blob.decode("utf-8"))
+    build_date: datetime = parse_datetime(image_config_json["created"])
+
+    if build_date.year <= 1970:
+        return None
+
+    return build_date
+
+
+async def fill_image_last_pushed_date():
+    logger.info("Filling last_pushed date for all images that don't have it yet")
+    has_more_data = True
+    async with DockerRegistryClientAsync() as registry_client:
+        while has_more_data:
+            await configure_and_reset_client(registry_client)
+            async with aiohttp.ClientSession() as http_session:
+                docker_hub_auth_header = await dockerhub_scraper.get_dockerhub_auth_header()
+                http_session.headers.update(docker_hub_auth_header)
+                with rx.session() as session:
+                    has_more_data = False
+                    image_update_counter = 0
+                    query = select(ImageToScrape).where(ImageToScrape.last_pushed.is_(None)).limit(
+                        FILL_LAST_PUSH_DATE_BATCH_SIZE)
+                    for image in session.exec(query):
+                        has_more_data = True
+                        last_push_date: Optional[datetime] = None
+                        if image.endpoint == Indices.DOCKERHUB:
+                            last_push_date = await dockerhub_scraper.get_last_push_date(image, http_session)
+
+                        if not last_push_date:
+                            try:
+                                last_push_date = await get_image_build_date_from_registry(image, registry_client)
+                                if not last_push_date:  # happens e.g. for distroless images that lack a build date
+                                    # Fallback: check if we have a scrape for this image, use the newest scrape date
+                                    query_newest_scrape = select(ImageUpdate).where(
+                                        ImageUpdate.image_id == image.id
+                                    ).order_by(ImageUpdate.scraped_at.desc()).limit(1)
+                                    newest_scrape = session.exec(query_newest_scrape).first()
+                                    if newest_scrape:
+                                        last_push_date = newest_scrape.scraped_at
+                                        # logger.debug(f"Using newest scrape date for image "
+                                        #           f"'{image.endpoint}/{image.image}:{image.tag}': {last_push_date}")
+                                    else:
+                                        # No scrape exists, use current time as fallback
+                                        last_push_date = datetime.now(ZoneInfo('UTC'))
+                                        # logger.debug(f"Using current time as fallback for image "
+                                        #           f"'{image.endpoint}/{image.image}:{image.tag}': {last_push_date}")
+                            except Exception as e:
+                                logger.warning(f"Failed to get build date from registry for image "
+                                               f"'{image.endpoint}/{image.image}:{image.tag}': {e}")
+                                continue
+
+                        if last_push_date:
+                            image.last_pushed = last_push_date
+                            session.add(image)
+                            image_update_counter += 1
+                            # logger.debug(f"Updated last_push_date: {last_push_date} for image "
+                            #             f"'{image.endpoint}/{image.image}:{image.tag}'")
+
+                    try:
+                        session.commit()
+                        logger.info(f"Updated last_pushed date for {image_update_counter} images in the database")
+                    except Exception as e:
+                        logger.warning(f"Failed to update last_pushed for images: {e}")
+
+    logger.info("Finished filling last_pushed date")
+
+
 def get_gcr_mirror_image_if_possible(img_to_scrape: ImageToScrape, retry_count: int) -> Optional[ImageName]:
     if retry_count % 2 == 1 and img_to_scrape.endpoint == Indices.DOCKERHUB:
         # On every second retry, try to use the GCR mirror for Docker Hub images
@@ -61,7 +160,7 @@ def get_gcr_mirror_image_if_possible(img_to_scrape: ImageToScrape, retry_count: 
 
 
 async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retries_on_rate_limit: int,
-                          sleep_interval_on_rate_limit: timedelta):
+                          sleep_interval_on_rate_limit: timedelta, refresh_digest_last_pushed_cutoff: timedelta):
     """
     Iterates over all ImageToScrape entries and refreshes the digest for each one. Uses batching to speed up the
     process.
@@ -159,6 +258,8 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
                             image_update = ImageUpdate(image_id=img_to_scrape.id, digest=result.digest)
                             try:
                                 session.add(image_update)
+                                img_to_scrape.last_pushed = datetime.now(ZoneInfo('UTC'))
+                                session.add(img_to_scrape)
                                 session.commit()
                                 job_execution.successful_queries += 1
                             except Exception as e:
@@ -188,7 +289,14 @@ async def refresh_digests(digest_refresh_cooldown_interval: timedelta, max_retri
                                 f"headers={result.client_response.headers}")
 
             batch_size = 10
-            for image_to_scrape in session.exec(select(ImageToScrape)):
+            # Only refresh digests for images with a recent last_pushed date or for "latest" tags
+            cutoff_date = datetime.now(ZoneInfo('UTC')) - refresh_digest_last_pushed_cutoff
+            query = select(ImageToScrape).where(
+                (ImageToScrape.tag == "latest") |
+                (ImageToScrape.last_pushed >= cutoff_date) |
+                (ImageToScrape.last_pushed.is_(None))
+            )
+            for image_to_scrape in session.exec(query):
                 images_to_scrape.append(image_to_scrape)
                 if len(images_to_scrape) == batch_size:
                     results = await asyncio.gather(*(fetch_digest(image) for image in images_to_scrape))
@@ -299,6 +407,37 @@ async def delete_old_images(image_update_max_age: timedelta, image_last_accessed
         session.commit()
 
 
+async def clean_digest_tags():
+    """
+    Cleans up ImageToScrape entries whose tag is longer than 64 characters (as a simple pre-filter implemented in SQL)
+    and whose tags are digest-like (checked with a Python function).
+    These are typically Notation/Cosign signature/attestation tags (e.g., "sha256-<hash>.sig")
+    or other digest-based tags that should not be monitored.
+    """
+    logger.info("Cleaning up ImageToScrape entries with digest-like tags")
+    with rx.session() as session:
+        query = select(ImageToScrape).where(func.length(ImageToScrape.tag) > 64)
+        images_to_check = session.exec(query).all()
+
+        deleted_count = 0
+        for image in images_to_check:
+            if contains_digest(image.tag):
+                try:
+                    session.delete(image)
+                    deleted_count += 1
+                except Exception as e:
+                    logger.warning(f"Failed to delete ImageToScrape entry "
+                                   f"'{image.endpoint}/{image.image}:{image.tag}': {e}")
+
+        if deleted_count > 0:
+            logger.info(f"Deleted {deleted_count} ImageToScrape entries with digest-like tags")
+
+        try:
+            session.commit()
+        except Exception as e:
+            logger.warning(f"Failed to commit deletions of digest-like tags: {e}")
+
+
 def verify_database_connection():
     with rx.session() as session:
         session.exec(text("SELECT 1"))  # raises in case the connection to the DB cannot be established
@@ -350,6 +489,10 @@ async def main():
     Time interval to wait between retries when hitting the registry's rate limit (getting HTTP 429 status
     codes in the response).
     """
+    refresh_digest_last_pushed_cutoff = durationpy.from_str(os.getenv("REFRESH_DIGEST_LAST_PUSHED_CUTOFF", "6mm"))
+    """
+    We only refresh digests for "latest" tags and for tags whose last_pushed date is within this interval.
+    """
 
     global http_request_limiter
     http_request_limiter = Limiter(max_requests_per_second)
@@ -360,6 +503,10 @@ async def main():
             await update_popular_images_to_scrape()
             last_image_refresh_timestamp = time.monotonic()
 
+        await clean_digest_tags()
+
+        await fill_image_last_pushed_date()
+
         now = time.monotonic()
         if (now - last_digest_refresh_timestamp) > digest_refresh_interval.total_seconds():
             await delete_old_images(image_update_max_age, image_last_accessed_max_age)
@@ -369,7 +516,8 @@ async def main():
 
             digest_refresh_start = time.monotonic()
             await refresh_digests(digest_refresh_cooldown_interval, max_retries_on_rate_limit=max_retries_on_rate_limit,
-                                  sleep_interval_on_rate_limit=sleep_interval_on_rate_limit)
+                                  sleep_interval_on_rate_limit=sleep_interval_on_rate_limit,
+                                  refresh_digest_last_pushed_cutoff=refresh_digest_last_pushed_cutoff)
             last_digest_refresh_timestamp = time.monotonic()
 
             digest_refresh_duration = timedelta(seconds=last_digest_refresh_timestamp - digest_refresh_start)

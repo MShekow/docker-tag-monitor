@@ -5,6 +5,8 @@ from ..components.digests_graph import digests_graph
 from ..components.digests_table import digests_table
 from ..main_template import template
 from ..state import ImageDetailsState
+from ..utils import refresh_digest_last_pushed_cutoff
+from ..components.utils import format_timedelta_human_friendly
 
 
 @template(route="/details/[[...splat]]", title="Image details", on_load=ImageDetailsState.on_page_load)
@@ -71,9 +73,31 @@ def index() -> rx.Component:
                             rx.data_list.value(ImageDetailsState.image_to_scrape.added_at),
                             align="center",
                         ),
+                        rx.data_list.item(
+                            rx.data_list.label("Last tag push"),
+                            rx.data_list.value(ImageDetailsState.image_to_scrape.last_pushed | "Unknown"),
+                            align="center",
+                        ),
                     ),
                 ),
                 ),
+        rx.cond(
+            ~ImageDetailsState.loading & ImageDetailsState.image_to_scrape & ImageDetailsState.updates_no_longer_scanned,
+            rx.callout(
+                rx.vstack(
+                    rx.text.strong("Image tag updates are no longer being scanned."),
+                    rx.text(f"The last push of this tag is older than "
+                            f"{format_timedelta_human_friendly(refresh_digest_last_pushed_cutoff)} and thus we "
+                            "consider this tag 'inactive' and no longer scan it."),
+                    rx.text("Docker Tag Monitor scans tens of thousands of tags "
+                            "several times daily, and thus we exclude tags like this which are unlikely to be updated "
+                            "anytime soon.")
+                ),
+                icon="triangle_alert",
+                color_scheme="red",
+                role="alert",
+            )
+        ),
         rx.cond(~ImageDetailsState.loading & (ImageDetailsState.image_to_scrape | ImageDetailsState.not_found),
                 add_image_tags_form()
                 ),

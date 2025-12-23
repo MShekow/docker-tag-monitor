@@ -29,6 +29,10 @@ backend:
   maxRequestsPerSecond: 10
   maxRetriesOnRateLimit: 10
   sleepIntervalOnRateLimit: "1s"
+  refreshDigestLastPushedCutoff: "6mm"  # 6 months
+  dockerHubAuth:
+    username: ""
+    password: ""
   resources: { }
     # limits:
     #   cpu: 100m
@@ -93,9 +97,13 @@ valkey:
   architecture: "standalone" # default is "replication"
   auth:
     enabled: false
+  image:
+    repository: bitnamilegacy/valkey
 
 postgresql:
   auth:
     username: postgres
     password: postgres
     database: postgres
+  image:
+    repository: bitnamilegacy/postgresql

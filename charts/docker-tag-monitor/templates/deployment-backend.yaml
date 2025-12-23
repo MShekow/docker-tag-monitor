@@ -43,6 +43,8 @@ spec:
               value: "redis://{{ .Release.Name }}-valkey-primary:6379"
             - name: GUNICORN_WORKERS
               value: "{{ .Values.backend.processesPerReplica }}"
+            - name: REFRESH_DIGEST_LAST_PUSHED_CUTOFF
+              value: "{{ .Values.backend.refreshDigestLastPushedCutoff }}"
           ports:
             - name: http
               containerPort: 8000
@@ -55,7 +57,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-          env:  # TODO: DockerHub credentials
+          env:
             - name: REFLEX_DB_URL
               value: "postgresql+psycopg://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
             - name: DIGEST_REFRESH_COOLDOWN_INTERVAL
@@ -66,6 +68,12 @@ spec:
               value: {{ .Values.backend.maxRetriesOnRateLimit | quote }}
             - name: SLEEP_INTERVAL_ON_RATE_LIMIT
               value: {{ .Values.backend.sleepIntervalOnRateLimit }}
+            - name: REFRESH_DIGEST_LAST_PUSHED_CUTOFF
+              value: "{{ .Values.backend.refreshDigestLastPushedCutoff }}"
+            - name: DOCKERHUB_USERNAME
+              value: {{ .Values.backend.dockerHubAuth.username | quote }}
+            - name: DOCKERHUB_PASSWORD
+              value: {{ .Values.backend.dockerHubAuth.password | quote }}
           args:
             - "python"
             - "/app/update_database.py"

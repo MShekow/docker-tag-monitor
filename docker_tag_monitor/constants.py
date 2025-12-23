@@ -23,6 +23,8 @@ updated to <now>.
 
 POPULAR_IMAGES_MAX_COUNT = 50
 
+FILL_LAST_PUSH_DATE_BATCH_SIZE = 50
+
 # URL was reverse engineered (via browser web dev tools) from the page
 # https://hub.docker.com/search?type=image&image_filter=official%2Cstore%2Copen_source
 DOCKERHUB_IMAGE_QUERY_URL = (f"https://hub.docker.com/api/search/v3/catalog/search?from=0"
@@ -30,3 +32,6 @@ DOCKERHUB_IMAGE_QUERY_URL = (f"https://hub.docker.com/api/search/v3/catalog/sear
                              "&type=image&source=store&official=true&open_source=true")
 DOCKERHUB_LIST_TAGS_FOR_IMAGE_URL = ("https://hub.docker.com/v2/repositories/{image_name}/tags"
                                      "?page_size={tags_per_image}&ordering=last_updated")
+DOCKERHUB_TAG_DETAILS_FOR_IMAGE_URL = ("https://hub.docker.com/v2/namespaces/{namespace_name}/repositories/"
+                                       "{image_name}/tags/{tag_name}")
+DOCKERHUB_AUTH_TOKEN_URL = "https://hub.docker.com/v2/auth/token"
