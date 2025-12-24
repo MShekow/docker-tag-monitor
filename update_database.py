@@ -145,7 +145,8 @@ async def fill_image_last_pushed_date():
 
                     try:
                         session.commit()
-                        logger.info(f"Updated last_pushed date for {image_update_counter} images in the database")
+                        if image_update_counter:
+                            logger.info(f"Updated last_pushed date for {image_update_counter} images in the database")
                     except Exception as e:
                         logger.warning(f"Failed to update last_pushed for images: {e}")
 
@@ -446,15 +447,15 @@ def verify_database_connection():
 async def main():
     verify_database_connection()
     last_image_refresh_timestamp = -999999999
-    last_digest_refresh_timestamp = -999999999
+    last_scrape_timestamp = -999999999
 
     image_refresh_interval = durationpy.from_str(os.getenv("IMAGE_REFRESH_INTERVAL", "1d"))
     """
     How often to update the ImageToScrape table with new "popular" images from Docker Hub.
     """
-    digest_refresh_interval = durationpy.from_str(os.getenv("DIGEST_REFRESH_INTERVAL", "1h"))
+    scrape_interval = durationpy.from_str(os.getenv("SCRAPE_INTERVAL", "2h"))
     """
-    How often to check for digest changes for all ImageToScrape entries.
+    How often to do a scrape, i.e., check for digest changes for all ImageToScrape entries and run clean-up tasks.
     """
     image_update_max_age = durationpy.from_str(os.getenv("IMAGE_UPDATE_MAX_AGE", "1y"))
     """
@@ -503,27 +504,30 @@ async def main():
             await update_popular_images_to_scrape()
             last_image_refresh_timestamp = time.monotonic()
 
-        await clean_digest_tags()
-
-        await fill_image_last_pushed_date()
-
         now = time.monotonic()
-        if (now - last_digest_refresh_timestamp) > digest_refresh_interval.total_seconds():
+        if (now - last_scrape_timestamp) > scrape_interval.total_seconds():
+            last_scrape_timestamp = time.monotonic()
+
             await delete_old_images(image_update_max_age, image_last_accessed_max_age)
 
             if auto_monitor_new_tags:
                 await monitor_new_tags()
 
+            await clean_digest_tags()
+
+            await fill_image_last_pushed_date()
+
             digest_refresh_start = time.monotonic()
             await refresh_digests(digest_refresh_cooldown_interval, max_retries_on_rate_limit=max_retries_on_rate_limit,
                                   sleep_interval_on_rate_limit=sleep_interval_on_rate_limit,
                                   refresh_digest_last_pushed_cutoff=refresh_digest_last_pushed_cutoff)
-            last_digest_refresh_timestamp = time.monotonic()
-
-            digest_refresh_duration = timedelta(seconds=last_digest_refresh_timestamp - digest_refresh_start)
-            if digest_refresh_duration > digest_refresh_interval:
-                logger.warning(f"Digest refresh took longer than the interval - some optimizations are required "
-                               f"(duration: {digest_refresh_duration}")
+            digest_refresh_end = time.monotonic()
+            digest_refresh_duration = timedelta(seconds=digest_refresh_end - digest_refresh_start)
+            scrape_duration = time.monotonic() - last_scrape_timestamp
+            if scrape_duration > scrape_interval:
+                logger.warning(f"Scrape took longer than the interval - some optimizations are required "
+                               f"(duration: {scrape_duration}, of which refreshing "
+                               f"digests took {digest_refresh_duration})")
         else:
             await asyncio.sleep(10)
 

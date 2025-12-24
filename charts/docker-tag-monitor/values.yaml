@@ -25,6 +25,7 @@ frontend:
 backend:
   replicaCount: 1
   processesPerReplica: 2
+  scrapeInterval: "2h"
   digestRefreshCooldownInterval: "5s"
   maxRequestsPerSecond: 10
   maxRetriesOnRateLimit: 10
