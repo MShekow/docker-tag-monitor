@@ -524,7 +524,7 @@ async def main():
             digest_refresh_end = time.monotonic()
             digest_refresh_duration = timedelta(seconds=digest_refresh_end - digest_refresh_start)
             scrape_duration = time.monotonic() - last_scrape_timestamp
-            if scrape_duration > scrape_interval:
+            if scrape_duration > scrape_interval.total_seconds():
                 logger.warning(f"Scrape took longer than the interval - some optimizations are required "
                                f"(duration: {scrape_duration}, of which refreshing "
                                f"digests took {digest_refresh_duration})")
