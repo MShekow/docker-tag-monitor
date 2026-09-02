@@ -736,95 +736,105 @@ files = [
 
 [[package]]
 name = "granian"
-version = "2.6.0"
+version = "2.8.2"
 description = "A Rust HTTP server for Python applications"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "granian-2.6.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:759e8be4481c5aede0080e3c20a9e1bc7c00258cd4810f88ebcfb6bdac298f03"},
-    {file = "granian-2.6.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:6af5d9a088536798ee3188f1cbcffc5690ed38a53851825e4125c3bf3c9cfef3"},
-    {file = "granian-2.6.0-cp310-cp310-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:50c1cad7b2b0fb7c66169a12ab069e2f76f4d2a7390638e5b327504372976518"},
-    {file = "granian-2.6.0-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a811d0b80099fe1da945e6d137d64dfe8e1dd07d3bf20e2e1eeae6f2c83adbb9"},
-    {file = "granian-2.6.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:61c7b04e5520ec3d749e53da414ba0ccc7773d7b24e8049539d47a4171aa922a"},
-    {file = "granian-2.6.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:d1bbe669228ba475adfdbebbae962f958be3002c742370000b7f5d06f895cacb"},
-    {file = "granian-2.6.0-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:bdef48aab0846fd5c215acd1779328d067708859bbf44c4e9363daa51b8c98bd"},
-    {file = "granian-2.6.0-cp310-cp310-musllinux_1_1_armv7l.whl", hash = "sha256:8459a8b2335689ecb04b2ccba63cbcdf030c242a64ae77be68fb6e263984a150"},
-    {file = "granian-2.6.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:dcde0783cb546304f0e20a1f99feb1a8795adfb0540c9278e5f9ef583edffb36"},
-    {file = "granian-2.6.0-cp310-cp310-win_amd64.whl", hash = "sha256:908a2dc5d2af1f275300827e5f8ec499206be995d777a86f850e7cc6fa722002"},
-    {file = "granian-2.6.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:38029b6c25ac5a9f8a6975b65846eee23d9fa7b91089a3ff6d11770d089020f3"},
-    {file = "granian-2.6.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:efd9c92bc5d245f10d6924847c25d7f20046c976a4817a87fd8476c22c222b16"},
-    {file = "granian-2.6.0-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:43e6a25d995206ba0a2fef65fea2789f36dde1006932ea2dcd9a096937c1afdd"},
-    {file = "granian-2.6.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5d7ac1be5c65fef4e04fb9860ca7c985b9c305f8468d03c8527f006c23100c83"},
-    {file = "granian-2.6.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:318a7db03e771e2611a976a8c4ecc7ae39e43e2ebffd20a4c2371a71cdc5659c"},
-    {file = "granian-2.6.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:cdb1ab7a0cedfa834c6e8e7c9e2530d80d6fd6f04076c2f6998629688f8ecb00"},
-    {file = "granian-2.6.0-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:fd11a9275ad01c2d99a322c1d0c8af0ad162c541515ad1d55ef585fd321cd2b9"},
-    {file = "granian-2.6.0-cp311-cp311-musllinux_1_1_armv7l.whl", hash = "sha256:489b1e24b4360ecdaf08d404e13549d4377e77756d1911454abed9e0b559345a"},
-    {file = "granian-2.6.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:17ba9fb67931852cf9d8eee23d1adb78c0e3106bd4ad440cf3b37ce124b4380c"},
-    {file = "granian-2.6.0-cp311-cp311-win_amd64.whl", hash = "sha256:93c2734364081e34a87b6f494e8057b5f25ba6baed4b609dbca33b3471d843ec"},
-    {file = "granian-2.6.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:b05b4fc5ce5855eb64a02b6e2c70b0d7e24632ee0d1193badfc0dace56688c11"},
-    {file = "granian-2.6.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b6aad6e7ded7a0a916119cd3ee28aa989e619074a6ca1ba3dc19cf5ad608832c"},
-    {file = "granian-2.6.0-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:8e77509ad3a5654da1268db9d78d49357bf91ac2d3dcb1c58a00cda162d922a7"},
-    {file = "granian-2.6.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e3a7cc82cdc5d0c7371d805f00866f51ece71bb0cb2e1f192b84834cf1a6844b"},
-    {file = "granian-2.6.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2dbbce087a055eb64896b809a9a1f88161751815b112de4aa02ee4348f49cb73"},
-    {file = "granian-2.6.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:a7fa2728d32dfaf3b1b2bf5b0b7c6d23bb75eaf62bd08b71b61797d292381970"},
-    {file = "granian-2.6.0-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:70b3867c33e5c95d6eb722a5c8b847c36c670fc189821bf7aef9934e943c2574"},
-    {file = "granian-2.6.0-cp312-cp312-musllinux_1_1_armv7l.whl", hash = "sha256:7fb0448a292f2dda9c4130e394ac09ef1164713d873882fd3106ca6949ff0897"},
-    {file = "granian-2.6.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:a5bd3c59fe3a7acb22e434749ff2258606a93bc5848fa96332a6ed4c752f4dc8"},
-    {file = "granian-2.6.0-cp312-cp312-win_amd64.whl", hash = "sha256:95ddf79727d7cda8e005c8bc1e09d57d907662eacfd918d774b7ffb3290dc6b9"},
-    {file = "granian-2.6.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:74f579e7295945119394dc05dd1565be1ac700f6f26c8271d8327dfabc95ec34"},
-    {file = "granian-2.6.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:f4e0e925d016e3dc43ae5950021c9ea0e9ee2ef1334a76ba7fbb80cc9e17c044"},
-    {file = "granian-2.6.0-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:6b568459abe4813e4968310312e26add3dab80c3ce5044b537ebfe464601fe9a"},
-    {file = "granian-2.6.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0041ba59e4b89818db1772ea677bb619f5e3030060dcb6c57e8a17d72dc6210b"},
-    {file = "granian-2.6.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7c032dca04171e4fbd54e587fe03aeef1825739d02ff3e3c49d578a8b5cc752c"},
-    {file = "granian-2.6.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:d5686da7358fede8e9a1e1344310c6e3cb2c4d02a1aca52c31c990fe6b7d6281"},
-    {file = "granian-2.6.0-cp313-cp313-musllinux_1_1_aarch64.whl", hash = "sha256:62c69bb23efe26a33ac39e4b6ca0237d84ed6d3bf47a5bb817e00a46c27369f2"},
-    {file = "granian-2.6.0-cp313-cp313-musllinux_1_1_armv7l.whl", hash = "sha256:2ee5087e4b876f29dd1a11e9c2dd8d864ecb207278767a33bba60975260f225d"},
-    {file = "granian-2.6.0-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:3627b69f391a769acfad4ae26bbfce03b50c31eb5fbea18ec0a44f37c89cf0fd"},
-    {file = "granian-2.6.0-cp313-cp313-win_amd64.whl", hash = "sha256:5a2e3bf928c47b02b31c4f2aa12aa99ef3e9fc9c969fd2e26284fa2f1f91eb86"},
-    {file = "granian-2.6.0-cp313-cp313t-macosx_10_12_x86_64.whl", hash = "sha256:c66877f2b2a1ad6046a228ee228ed4faa43dd4949fbe07f61d5c38ad57506e02"},
-    {file = "granian-2.6.0-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:919ccfe3273c6325c82ecb2e62b5af4d1b57fdc9858ce725b8223af2e1d6e2cd"},
-    {file = "granian-2.6.0-cp313-cp313t-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:7d6368281f9f1bfde53a71f67570b70df773e01329f7a113b248de453e5991c1"},
-    {file = "granian-2.6.0-cp313-cp313t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:b3d0b7dd32a630336120c9a12e7ba7ca4e415bebd22d9735b19df593e01ffa40"},
-    {file = "granian-2.6.0-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:acb18fca86ff560ea5a3bf9dc342245e388409844c257d1125ff9a988c81080b"},
-    {file = "granian-2.6.0-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:3606f13ba2fd9afde1d879ef556afcccd17b55c57a9f6be8487626867fe94a20"},
-    {file = "granian-2.6.0-cp313-cp313t-musllinux_1_1_aarch64.whl", hash = "sha256:ca8188119daba0a343d2736dd4ed4d8d71ca5c0ca016a3f93599710906aa036f"},
-    {file = "granian-2.6.0-cp313-cp313t-musllinux_1_1_armv7l.whl", hash = "sha256:6ac9d479d4795ab9c7222829d220636250ee034d266ad89a9657b64fb6770b93"},
-    {file = "granian-2.6.0-cp313-cp313t-musllinux_1_1_x86_64.whl", hash = "sha256:b8cc3635676639c1c6fc336571e7cdd4d4f0be6e05c33ae06721a570b346ce21"},
-    {file = "granian-2.6.0-cp313-cp313t-win_amd64.whl", hash = "sha256:91fb08e02598a0059cd1cc1f807c085f2bc386c0deb370f216edadf75adee8b8"},
-    {file = "granian-2.6.0-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:cba1d4ac5b101c41fa916fb1ca5d5c359892b63d1470a9587055605c68850df8"},
-    {file = "granian-2.6.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:2c829ece96a49d431c01553e0c020a675624798659c74e3d800867a415376fef"},
-    {file = "granian-2.6.0-cp314-cp314-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:637153b653a85e1bb0cba2e10e321e2cbb1af1e9abab0feafd34eb612fe3fcdd"},
-    {file = "granian-2.6.0-cp314-cp314-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b6c09792ca3807059ef8e58a7c7bc5620586414f03ebd4bb2e6cd044044f0165"},
-    {file = "granian-2.6.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:79e2f68d99f454d1c51aacc86bed346693c074f27c51fb19b8afe5dc375e1b70"},
-    {file = "granian-2.6.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:995f7b496b16484c97e8da9f44ead66307d6f532135a9890b0d27c88b8232df3"},
-    {file = "granian-2.6.0-cp314-cp314-musllinux_1_1_aarch64.whl", hash = "sha256:6d5db194527d52183b2dc17be9d68c59647bc66459c01a960407d446aa686c98"},
-    {file = "granian-2.6.0-cp314-cp314-musllinux_1_1_armv7l.whl", hash = "sha256:c9fd40f3db242eece303ab4e9da4c7c398c865d628d58ff747680c54775ea9e4"},
-    {file = "granian-2.6.0-cp314-cp314-musllinux_1_1_x86_64.whl", hash = "sha256:99dfa23b29e6a4f8cc2ec9b55946746f94ce305e474defef5c3c0e496471821e"},
-    {file = "granian-2.6.0-cp314-cp314-win_amd64.whl", hash = "sha256:22138a906503cb62cc25e26baa6d9e424ae26f9b46d7f852126d0a92fd9b3194"},
-    {file = "granian-2.6.0-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:a8b356e8d96481c0fa67c2646a516b1f8985171995c0a40c5548352b75cae513"},
-    {file = "granian-2.6.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:f026d7a2f1395b02cba2b59613edfd463d9ef43aae33b3c5e41f2ac8d0752507"},
-    {file = "granian-2.6.0-cp314-cp314t-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:15c888605406c9b29b7da8e3afa0ce31dabad7d446cf42a2033d1f184e280ef3"},
-    {file = "granian-2.6.0-cp314-cp314t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:d9ce9ff8d4d9da73eb2e90c72eae986f823ab46b2c8c7ee091ec06e3c835a94e"},
-    {file = "granian-2.6.0-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:681f44fa950b50721250536477b068315322c447f60b6a7018a9d61385202d67"},
-    {file = "granian-2.6.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:cf23f25826e7c87c2cd9d984a358c14106d589febcd71af0f5392bb65fafb07a"},
-    {file = "granian-2.6.0-cp314-cp314t-musllinux_1_1_aarch64.whl", hash = "sha256:559985641cc1f0497f2c35d75126214f9cf9286ec6cea083fb1d0324712dbc47"},
-    {file = "granian-2.6.0-cp314-cp314t-musllinux_1_1_armv7l.whl", hash = "sha256:98718c08713d4afdf0e444f6236eeac6d01fdf08d0587f3c15da37fd12ee03f6"},
-    {file = "granian-2.6.0-cp314-cp314t-musllinux_1_1_x86_64.whl", hash = "sha256:c115726904be2186b1e621a2b4a292f8d0ccc4b0f41ac89dcbe4b50cbaa67414"},
-    {file = "granian-2.6.0-cp314-cp314t-win_amd64.whl", hash = "sha256:5bf42d8b4240f95a0edd227175161c0c93d465d6b8bb23abd65c2b82c37cfc44"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-macosx_10_12_x86_64.whl", hash = "sha256:323c096c7ebac19a16306708b4ed6abc9e57be572f0b9ff5dc65532be76f5d59"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:b9736ab48a1b3d70152e495374d4c5b61e90ea2a79f1fc19889f8bba6c68b3b5"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee4b1f5f7ec7096bdffc98171b559cb703c0be68e1c49ff59c208b90870c6bba"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:e1e27e9527cdcd8e767c52e091e69ade0082c9868107164e32331a9bf9ead621"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:f9f9c5384f9370179d849c876c35da82f0ebd7389d04a3923c094a9e4e80afc5"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:561a3b86523a0b0e5d636229e3f0dcd80118ace2b1d2d061ecddeba0044ae8ac"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:8e12a70bdb3b5845f62dc2013527d5b150b6a4bc484f2dec555e6d27f4852e59"},
-    {file = "granian-2.6.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:2ce02a92e938a44ea942ea1be44056fd41861ce957cf4498f0258fb15b04210a"},
-    {file = "granian-2.6.0.tar.gz", hash = "sha256:d9b773633e411c7bf51590704e608e757dab09cd452fb18971a50a7d7c439677"},
+    {file = "granian-2.8.2-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:99e9653684d800460b3c438741091735ac43c2b27f62ea63eaa53d85aef987b6"},
+    {file = "granian-2.8.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:a7f61f507488fab88d0e561f7390ae77f8af397bd0106e11437be9b0fdaddcf9"},
+    {file = "granian-2.8.2-cp310-cp310-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:76f32478f96dddecdf739b85f6f27a0c8e36f9426ee4e0f18017b38ef1faa869"},
+    {file = "granian-2.8.2-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c60c9e1737f38f33af43326285d1d827bb8bf29974c758dddbca956ec3f3d72b"},
+    {file = "granian-2.8.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4483b4d2271bbfdc6337e7e58fdfc1841e250ec3f118ea843882a6244d47bd0c"},
+    {file = "granian-2.8.2-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:9c45c819ff4ede289b1b4bf81aa904a8bdc58e2234e29d68b525d8ccf60ef918"},
+    {file = "granian-2.8.2-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:d1db77297c2057533bbe9746c4992d0e3af33473bc585348d171646133257eed"},
+    {file = "granian-2.8.2-cp310-cp310-musllinux_1_1_armv7l.whl", hash = "sha256:de4e86991ff2e11736f3bc08c4616d96b3a79fa2e793159df54c2949cfd9edea"},
+    {file = "granian-2.8.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:34ace17c95430a97633837a8c454a02417b04340e1efc103186c9e66f1e941e9"},
+    {file = "granian-2.8.2-cp310-cp310-win_amd64.whl", hash = "sha256:76debbb97a1d5cc6a79274bb7e0c10d165d8d765ee942afb268800cbc63e3e82"},
+    {file = "granian-2.8.2-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:a1da543c6fafbae059e90df5756df17095ee059c9a9ec7acabd7dd88cc273184"},
+    {file = "granian-2.8.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:54d64fba52ae5b29e7fb8489fdec5185859b0e299a6add92d4d69bf94d8684e9"},
+    {file = "granian-2.8.2-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:4053a99b6fb82e98807f854d3c6d6ebe0a49353c9eb7797999d166a99c1ae399"},
+    {file = "granian-2.8.2-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c5ef2175682f3016589df34c0f348a7840e7513c60a1a3f60b6b78326509b5aa"},
+    {file = "granian-2.8.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:684fbb039483b42606bf74e8675262e1947ae7303e5a844a3194e02f2f853d51"},
+    {file = "granian-2.8.2-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:84fd77bb1a66d9cb06ebb68fa4480204b69ef6bb314e942ebad3f2952ea0e072"},
+    {file = "granian-2.8.2-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:d8d2ea99f8b4412eb4c320478148e58d76e5ebbb12bb487d7c64f7b4100517b0"},
+    {file = "granian-2.8.2-cp311-cp311-musllinux_1_1_armv7l.whl", hash = "sha256:79be108e63e7812237a67a7d2c97e1ab34411d4b3f7ad537e196f6afc0803659"},
+    {file = "granian-2.8.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:b4006292f09145ce642131e2cb53e79ee12a92ef0f938d8e84e5d4d28cb7a030"},
+    {file = "granian-2.8.2-cp311-cp311-win_amd64.whl", hash = "sha256:f2738a9c49015c65c83a077a8c35a0e525152a6505ac267ba25d7b25a4547bb8"},
+    {file = "granian-2.8.2-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:15fca7c867b0477209dd02940d52a35dcf0785f70081824bca5dabf7ab0b3ba7"},
+    {file = "granian-2.8.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e45ed005bbb6cb7f77682de2c72e33797f84310f8ffd0c97d0bd5b93aae4e185"},
+    {file = "granian-2.8.2-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:b5c6bb7a7bbedea92a6c6c200e1b01f3b5059a6c5b5b8face1fcd396682f0e29"},
+    {file = "granian-2.8.2-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:887c822fbe85e603dcab24138fcdfa02262e41737ccc016238c435e44b4a53dc"},
+    {file = "granian-2.8.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a2fbff8464c7831cc7e2dc9dd7f04301de035c44481c1fafad7e87d2e479cddd"},
+    {file = "granian-2.8.2-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:7341d8672475707c733f4b6f98ca8524833aa70eaab2826f333f17214cb29132"},
+    {file = "granian-2.8.2-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:aacebc0cbf1e4068918b0d6450ab538ad7bd4c42cd866e76bbb13f87af45def4"},
+    {file = "granian-2.8.2-cp312-cp312-musllinux_1_1_armv7l.whl", hash = "sha256:9e92f4319f2fb955f6e8f620381fe015e67c66506de73dd0e92ef0e0d10fab20"},
+    {file = "granian-2.8.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:a55b966ce6e3cced43b1b337652fb714ea355e8cc4647045118b525e2e57c722"},
+    {file = "granian-2.8.2-cp312-cp312-win_amd64.whl", hash = "sha256:9602e34f57f1c5c7c4c4b9b5fe11968c3223182cabfc6dbd7d7ee06e9ff25b95"},
+    {file = "granian-2.8.2-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:434deec2c9af78785c93cd7f7a81f9869afc3003170e309ffc23f9b8ad6bbd35"},
+    {file = "granian-2.8.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:679ac93bc56b6af17363b6577b8e36c399e0283128f76d00e6254433b26fd037"},
+    {file = "granian-2.8.2-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:ae8805ea5d0dbb31d232437df9d23bf4a21a1a7e472cce05b11594662278b3b4"},
+    {file = "granian-2.8.2-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:35414a2eea2adf92e71762a6793412794ae32540e1103400e62dd423f38b5a7a"},
+    {file = "granian-2.8.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7fdc50c290dc26d61891255b6e118606c1fd8fbdfba3059da199052172ecb539"},
+    {file = "granian-2.8.2-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:8a9d20c8a509213bf0c3235c79c3d1892aa887521dd7ea4c36a2ee40dcdb72ab"},
+    {file = "granian-2.8.2-cp313-cp313-musllinux_1_1_aarch64.whl", hash = "sha256:63ba5fada798ff9d7fdedc3bd1fbed60d8269195fd13d4f48c273024eb23a292"},
+    {file = "granian-2.8.2-cp313-cp313-musllinux_1_1_armv7l.whl", hash = "sha256:b22cbcc8e5ca399c0b231a74bb87b4f477a59b4c4852daa7f488c0a6561b1666"},
+    {file = "granian-2.8.2-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:43c670710b34b65693f3e36d7665b18eb819e4783d43368c8144e2e9deff6b40"},
+    {file = "granian-2.8.2-cp313-cp313-win_amd64.whl", hash = "sha256:000d459d3b6cc7eb43ae673ba77411e27bdc1e278b6f7e4e01cf3fcdad2d4c6d"},
+    {file = "granian-2.8.2-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:325458915a148c878275524ddd959bfd35a83d1672369aa45df04a52c71dd5db"},
+    {file = "granian-2.8.2-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:3d150f1678ed5c90e3bd17db5ab66c8355f01dfc66ff46adc898e792d0cb577f"},
+    {file = "granian-2.8.2-cp314-cp314-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:89db0fbec47cc45c9044c4b91ca0ce00d6f048145eaa3f49e9d4b1e420057fd6"},
+    {file = "granian-2.8.2-cp314-cp314-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6521b5022e8d4fa0e7c68f5189ce00f5e83af7a36e84f0475f02612aa1c8c70e"},
+    {file = "granian-2.8.2-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d33a2be566fdb81fc6de918930a9cd3b434eb6d696a086ddbb0ff73c180402c"},
+    {file = "granian-2.8.2-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:52d59102c33717960edd3ffc4d81719509e15f06f049e6321e41ccf444d58eef"},
+    {file = "granian-2.8.2-cp314-cp314-musllinux_1_1_aarch64.whl", hash = "sha256:e829a39c3ead7e91ab58cbf82800cdac4306a71805962d5e0ddb0c292d521696"},
+    {file = "granian-2.8.2-cp314-cp314-musllinux_1_1_armv7l.whl", hash = "sha256:37536dcc0592bc7f65dcbb260173e7d5719207fdf3f8dcdc8d573bc664ad014e"},
+    {file = "granian-2.8.2-cp314-cp314-musllinux_1_1_x86_64.whl", hash = "sha256:3a01905b1cef50c502f1866434770b2821a7ccc2cdd7b9d8ab06dee84e19720b"},
+    {file = "granian-2.8.2-cp314-cp314-win_amd64.whl", hash = "sha256:23474c7cd397741bd375f2a2c66244c0406f8911619c59a260149b22f86f76c9"},
+    {file = "granian-2.8.2-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:825481c04ecd4c8e493a9f6c4b0f35d49ddf62a5576d7247e91d8e19a4bc87ff"},
+    {file = "granian-2.8.2-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:df45b9f1e7ddafe4e6e51382cb39cd458e99a5536278b5c5e713dac8c698bee7"},
+    {file = "granian-2.8.2-cp314-cp314t-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:e16cd27f6896238d9a09998e1bd2244a68b0ea43e6325f2e6107fd6497731248"},
+    {file = "granian-2.8.2-cp314-cp314t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:7e624b05e9c7ef50cbf7f3fb69d54a8b8e5924c21161634f02d93e2cbe845337"},
+    {file = "granian-2.8.2-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b659f4f8cfa388734550db794752dcf8fb7bcef7fa2e55ba877e961350fcb8fb"},
+    {file = "granian-2.8.2-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:77a1119ef84fbde0c4705cb09f3ebaa23807f5d4ddf4d1a5f7bf11056842b8d5"},
+    {file = "granian-2.8.2-cp314-cp314t-musllinux_1_1_aarch64.whl", hash = "sha256:8af72cee8823da6280251e53aec774abfd093588a6db9ce8193d0076851601d1"},
+    {file = "granian-2.8.2-cp314-cp314t-musllinux_1_1_armv7l.whl", hash = "sha256:886e727e11706897db81d97b976c12e3613c22df299d56bde446e71906ebbc9a"},
+    {file = "granian-2.8.2-cp314-cp314t-musllinux_1_1_x86_64.whl", hash = "sha256:de73d86d7ae6af5b6248840c4b700a39cdb13f7ac8f5e31d74f203c8cffad8fc"},
+    {file = "granian-2.8.2-cp314-cp314t-win_amd64.whl", hash = "sha256:144af53b25ef35e119cb15b79514600896c6f5f3bdac83f7d6c80a2a7384cfaa"},
+    {file = "granian-2.8.2-cp315-cp315-macosx_10_12_x86_64.whl", hash = "sha256:63fc5f40e7e258be3f61199a73fd85f49b74d0514fbc993f5e6263fa9d104013"},
+    {file = "granian-2.8.2-cp315-cp315-macosx_11_0_arm64.whl", hash = "sha256:f42da6a579030774a25df67b5432ced73bd2f8eda36df11d79739059c03c4740"},
+    {file = "granian-2.8.2-cp315-cp315-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:927e248fc2225709ef82d8fbec88e1bc44286cfcb2e033e83d9bc935e863a897"},
+    {file = "granian-2.8.2-cp315-cp315-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:bbbe64f19cdceb306b91bed01ce875e3f4ffcbafedaf2d30bedbeb33682a026d"},
+    {file = "granian-2.8.2-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:225fc15fce8201a3d341e2eaece168a6e344dcf38cace59ecf2049be286dca33"},
+    {file = "granian-2.8.2-cp315-cp315-manylinux_2_28_aarch64.whl", hash = "sha256:d3c881e567ee36f791b850358154daadb5b1262a9bf8a56b2048f53586b1e678"},
+    {file = "granian-2.8.2-cp315-cp315-musllinux_1_1_aarch64.whl", hash = "sha256:f20441ccb3b500c5e6368afc237257775fb893584aebc087157056f78643f3e8"},
+    {file = "granian-2.8.2-cp315-cp315-musllinux_1_1_armv7l.whl", hash = "sha256:1dc5155ccadeedafa25baea4ad2cd3003db7127257ef1eb623039b2e7087c759"},
+    {file = "granian-2.8.2-cp315-cp315-musllinux_1_1_x86_64.whl", hash = "sha256:80c10fd8879dd5972ef67cc91255d628e860f477b0f9c9f165331132916ca637"},
+    {file = "granian-2.8.2-cp315-cp315-win_amd64.whl", hash = "sha256:e4ebcde088974cb23332f921b6418448d4328873311006798e61e23ceb773376"},
+    {file = "granian-2.8.2-cp315-cp315t-macosx_10_12_x86_64.whl", hash = "sha256:0c78a53649ce6aa238fa7da79a4a93931cacd80b7e9bdbe89b296902f2533aed"},
+    {file = "granian-2.8.2-cp315-cp315t-macosx_11_0_arm64.whl", hash = "sha256:c14da904d02f71b22e02004188ee0df66568415f6941ea32f124a0c07d57b88b"},
+    {file = "granian-2.8.2-cp315-cp315t-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:94ea4531e2bbe385cc2dc965e1cb33015996e808f966c0a334ee2ad8f381264b"},
+    {file = "granian-2.8.2-cp315-cp315t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:15104fb8e7946a6639eccd89c16d05c43ecdd493c97c415d1ad0b00cb6722540"},
+    {file = "granian-2.8.2-cp315-cp315t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c3e58821fce2fa93406bba043eac6a8c24518e63d9ead044623d1fc92205380f"},
+    {file = "granian-2.8.2-cp315-cp315t-manylinux_2_28_aarch64.whl", hash = "sha256:39fadbc69e5279d1b5181411d80239a0ffd1fa75422903fb97e871545c8edb5d"},
+    {file = "granian-2.8.2-cp315-cp315t-musllinux_1_1_aarch64.whl", hash = "sha256:956968b9b32a74eaade95502c1664038c978731c17bb2c4e039bbdcf0279653a"},
+    {file = "granian-2.8.2-cp315-cp315t-musllinux_1_1_armv7l.whl", hash = "sha256:214d4e1b7353216e3ec16cc49d8eecb29e8949ae6e2a815891250465b7c3b0f5"},
+    {file = "granian-2.8.2-cp315-cp315t-musllinux_1_1_x86_64.whl", hash = "sha256:587f1121c44cab7df8d71b3f9bde0ac90d603096685ba212a4e193ae6fd2209c"},
+    {file = "granian-2.8.2-cp315-cp315t-win_amd64.whl", hash = "sha256:c4047b3dd1b581b56808a8a5e6932bb246c81cb7de3b5eeb82b2fca23233f6b3"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-macosx_10_12_x86_64.whl", hash = "sha256:d275ca1b6dafde6807a5b1baece9f49ecf63c2cb744f61e774800c07cac78d0d"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:42be026b47f8bc6beda8ce01a8a193e297a93b62613340a746a06a8a17751a81"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0310c68d288b7892d0ae852ec0c5e1e894a1c642deaca1e07ca18960e3336851"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:5e70dd701be4263c6b2b2f16094bcb6f6ed03fe7782165e40f850fb746a109b8"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:dac13e7f83f797e9a9106ce6d6e0263a65962188ceba74326fcfbe1d485c658b"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:77dacca3c0a858b958a7442557652d182f985a3b335f43d22e65d46929975f22"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:8475e23ea2aa9dae4bac28f3ccae403e2cd07c36162a2b4a2bf8dbe43cf28509"},
+    {file = "granian-2.8.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:f5967b021e36448d870012c0853342a119d7427ea67e3b23abb8798897bf14be"},
+    {file = "granian-2.8.2.tar.gz", hash = "sha256:466a23e8cb44d4b407fa3db0f37aeb45ae722cad4d4b3701d6fa6b13ca54b1ef"},
 ]
 
 [package.dependencies]
-click = ">=8.0.0"
+click = ">=8.1.0"
 watchfiles = {version = ">=1.0,<2.0", optional = true, markers = "extra == \"reload\""}
 
 [package.extras]
@@ -1902,14 +1912,14 @@ docs = ["sphinx"]
 
 [[package]]
 name = "python-multipart"
-version = "0.0.21"
+version = "0.0.32"
 description = "A streaming multipart parser for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "python_multipart-0.0.21-py3-none-any.whl", hash = "sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090"},
-    {file = "python_multipart-0.0.21.tar.gz", hash = "sha256:7137ebd4d3bbf70ea1622998f902b97a29434a9e8dc40eb203bbcf7c2a2cba92"},
+    {file = "python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23"},
+    {file = "python_multipart-0.0.32.tar.gz", hash = "sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e"},
 ]
 
 [[package]]
@@ -1954,52 +1964,279 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (>=20.0.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "reflex"
-version = "0.8.23"
+version = "0.9.10.post1"
 description = "Web apps in pure Python."
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "reflex-0.8.23-py3-none-any.whl", hash = "sha256:a9efe8f360c6fa703f3a3d38a1c0fe6a63902f3fcd8a72ea1fe0eb506321d8f3"},
-    {file = "reflex-0.8.23.tar.gz", hash = "sha256:296d4f75ab6d1a70639780842d3e38985365e53f10e2620fab80428ce7e6748a"},
+    {file = "reflex-0.9.10.post1-py3-none-any.whl", hash = "sha256:3c40dcf86a9f57cf1332b7f87062abad1439e52d371a91b5c312df84e5bbe2eb"},
+    {file = "reflex-0.9.10.post1.tar.gz", hash = "sha256:7b71238d655a9d1264ce8f618910e2e7834b1b34ed90747f127b4e5c6c57c12b"},
 ]
 
 [package.dependencies]
-alembic = ">=1.15.2,<2.0"
+alembic = {version = ">=1.15.2,<2.0", optional = true, markers = "extra == \"db\""}
 click = ">=8.2"
-granian = {version = ">=2.5.5", extras = ["reload"]}
-httpx = ">=0.23.3,<1.0"
-packaging = ">=24.2,<26"
-platformdirs = ">=4.3.7,<5.0"
+granian = {version = ">=2.7.4", extras = ["reload"]}
+httpx = ">=0.26,<1.0"
+packaging = ">=24.2,<27"
 psutil = {version = ">=7.0.0,<8.0", markers = "sys_platform == \"win32\""}
-pydantic = ">=1.10.21,<3.0"
-python-multipart = ">=0.0.20,<1.0"
+pydantic = {version = ">=2.12.0,<3.0", optional = true, markers = "extra == \"db\""}
+python-multipart = ">=0.0.32,<1.0"
 python-socketio = ">=5.12.0,<6.0"
-redis = ">=5.2.1,<8.0"
-reflex-hosting-cli = ">=0.1.59"
-rich = ">=13,<15"
-sqlmodel = [
-    {version = ">=0.0.27,<0.1"},
-    {version = ">=0.0.27,<0.1", optional = true, markers = "extra == \"db\""},
-]
-starlette = ">=0.47.0"
+redis = ">=6.4,<8.0"
+reflex-base = "0.9.10.post1"
+reflex-components-code = ">=0.9.0"
+reflex-components-core = ">=0.9.6"
+reflex-components-dataeditor = ">=0.9.0"
+reflex-components-gridjs = ">=0.9.0"
+reflex-components-lucide = ">=0.9.0"
+reflex-components-markdown = ">=0.9.0"
+reflex-components-moment = ">=0.9.0"
+reflex-components-plotly = ">=0.9.0"
+reflex-components-radix = ">=0.9.2"
+reflex-components-react-player = ">=0.9.0"
+reflex-components-recharts = ">=0.9.0"
+reflex-components-sonner = ">=0.9.0"
+reflex-hosting-cli = ">=0.1.71"
+rich = ">=13,<16"
+sqlmodel = {version = ">=0.0.24,<0.1", optional = true, markers = "extra == \"db\""}
+starlette = ">=1.3.1"
 typing-extensions = ">=4.13.0"
-wrapt = ">=1.17.0,<3.0"
+wrapt = ">=1.17.0,<2.2"
 
 [package.extras]
-db = ["alembic (>=1.15.2,<2.0)", "pydantic (>=1.10.21,<3.0)", "sqlmodel (>=0.0.24,<0.1)"]
-monitoring = ["pyleak (>=0.1.14,<1.0)"]
+db = ["alembic (>=1.15.2,<2.0)", "pydantic (>=2.12.0,<3.0)", "sqlmodel (>=0.0.24,<0.1)"]
+pydantic = ["reflex-base[pydantic]"]
+
+[[package]]
+name = "reflex-base"
+version = "0.9.10.post1"
+description = "Core types for the Reflex framework."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_base-0.9.10.post1-py3-none-any.whl", hash = "sha256:76e4c29cd183b27cf3371f4fb7088c74662dbf4fa368660417dbb4706f760181"},
+    {file = "reflex_base-0.9.10.post1.tar.gz", hash = "sha256:73fd890888302ce2dda467a743702795feda988f5794b5bf3f85dc0cb716002e"},
+]
+
+[package.dependencies]
+packaging = ">=24.2,<27"
+platformdirs = ">=4.3.7,<5.0"
+rich = ">=13,<16"
+typing-extensions = ">=4.13.0"
+
+[package.extras]
+pydantic = ["pydantic (>=2.12.0,<3.0)"]
+
+[[package]]
+name = "reflex-components-code"
+version = "0.9.4"
+description = "Reflex code display components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_code-0.9.4-py3-none-any.whl", hash = "sha256:bfccf00e4721c58833be241085c3aa96418d497e52f25b59aeaa5f17a46a2b46"},
+    {file = "reflex_components_code-0.9.4.tar.gz", hash = "sha256:2c3016cc948dd6bcac7031117c7d5ec4223f60e2274edcf90aac57ffd7dde830"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+reflex-components-core = ">=0.9.0"
+reflex-components-lucide = ">=0.9.0"
+reflex-components-radix = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-core"
+version = "0.9.9"
+description = "UI components for Reflex."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_core-0.9.9-py3-none-any.whl", hash = "sha256:2f65f06b2e0543a2bd22ba84279116cbb391067baba9e31759ba0405e7fda5fe"},
+    {file = "reflex_components_core-0.9.9.tar.gz", hash = "sha256:af5db7d9f4c2ceb681df2feaa8034f9084ae9460bfacb3f8d714cd84bfc3dc0c"},
+]
+
+[package.dependencies]
+python-multipart = ">=0.0.21"
+reflex-base = ">=0.9.9"
+reflex-components-lucide = ">=0.9.0"
+reflex-components-sonner = ">=0.9.0"
+starlette = ">=0.47.0"
+typing-extensions = ">=4.0.0"
+
+[[package]]
+name = "reflex-components-dataeditor"
+version = "0.9.2"
+description = "Reflex dataeditor components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_dataeditor-0.9.2-py3-none-any.whl", hash = "sha256:48c89551eeab6e9f7905c665f1447a25a6de751115e0fbe3803b3e09bc753261"},
+    {file = "reflex_components_dataeditor-0.9.2.tar.gz", hash = "sha256:d2cb46a8109d71da679461967fff38dd0baf4da28cb1a442161b98e1cfb5d272"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+reflex-components-core = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-gridjs"
+version = "0.9.1"
+description = "Reflex gridjs components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_gridjs-0.9.1-py3-none-any.whl", hash = "sha256:02582137af88ce7c3983a3fc494b746cfb9fee5bc69a96ae03027c8a102a4b13"},
+    {file = "reflex_components_gridjs-0.9.1.tar.gz", hash = "sha256:78f9aa0a63b06dc919b4e7b3cb23764558199aeefd3aa59fa556c6430ead9a64"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-lucide"
+version = "1.0.4"
+description = "Reflex lucide components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_lucide-1.0.4-py3-none-any.whl", hash = "sha256:2688f75468f1fa97f81e3d54e8e709c76cff8d8bc9260eb08f75b2f2b1e4b2bd"},
+    {file = "reflex_components_lucide-1.0.4.tar.gz", hash = "sha256:216e1f48d01220ab2df259aa7d928698b0bd0812eaacfb782b876ec425247b0a"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-markdown"
+version = "0.9.3"
+description = "Reflex markdown components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_markdown-0.9.3-py3-none-any.whl", hash = "sha256:4bd8a6d0be5c4b715e855936e49ca513caf7ba470d2b07d87f60d11c53edde1d"},
+    {file = "reflex_components_markdown-0.9.3.tar.gz", hash = "sha256:cec631217e893b21a202cb86734d204a9a268d4f5cac8c6711c19d90e09b62be"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+reflex-components-code = ">=0.9.0"
+reflex-components-core = ">=0.9.0"
+reflex-components-radix = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-moment"
+version = "0.9.3"
+description = "Reflex moment components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_moment-0.9.3-py3-none-any.whl", hash = "sha256:1645b2c67f5d753508cf732a17c270ecd41464139c1acec04b3232c8f1d4f3f8"},
+    {file = "reflex_components_moment-0.9.3.tar.gz", hash = "sha256:e470f3eed6905c15189215c11bee775ddbe58b943e4d1a5aebff9a2ca1ef5dae"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-plotly"
+version = "0.9.5"
+description = "Reflex plotly components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_plotly-0.9.5-py3-none-any.whl", hash = "sha256:ee840aec940d48132096af287c6789ab9261561e2317bae9aeaa76b3ccf8575f"},
+    {file = "reflex_components_plotly-0.9.5.tar.gz", hash = "sha256:a1a63d73965a0d260674a832a7a0011b32dc7bd73c2253815acb18dbe42f604b"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+reflex-components-core = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-radix"
+version = "0.9.8"
+description = "Reflex radix components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_radix-0.9.8-py3-none-any.whl", hash = "sha256:eb3db6e3c5c58c4938059c418eee1d6dcc4ececf5d3b1f34cce4188b3b21c3a2"},
+    {file = "reflex_components_radix-0.9.8.tar.gz", hash = "sha256:b872b99a8d5536c6622d078000d52b416b438eff71cc582f88c0d34a39985281"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.7"
+reflex-components-core = ">=0.9.5"
+reflex-components-lucide = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-react-player"
+version = "0.9.2"
+description = "Reflex react-player components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_react_player-0.9.2-py3-none-any.whl", hash = "sha256:3e2d234759169d4f3b65ca3eafef1452cfce51ca190b0b318eb4129acf295a72"},
+    {file = "reflex_components_react_player-0.9.2.tar.gz", hash = "sha256:f4790a60d92412dc439c99f567525da589318be6ad80f8d5616b8fbde71e83e3"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+reflex-components-core = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-recharts"
+version = "0.9.2"
+description = "Reflex recharts components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_recharts-0.9.2-py3-none-any.whl", hash = "sha256:fba108ad9ab049131c407dbf376b8716fb34ac03738d62ba40e02555607017b3"},
+    {file = "reflex_components_recharts-0.9.2.tar.gz", hash = "sha256:d79866b90b9968abd0998da318e8842a218f807c151de8d2b58648074efbb662"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+
+[[package]]
+name = "reflex-components-sonner"
+version = "0.9.2"
+description = "Reflex sonner components."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "reflex_components_sonner-0.9.2-py3-none-any.whl", hash = "sha256:a162ece49f49412343978f1dcba36212139a1797232c2e903b345a9cd034f822"},
+    {file = "reflex_components_sonner-0.9.2.tar.gz", hash = "sha256:d19260baa1e5ffbcee21ae88fe1050fc15cd65c707b5452d44d2de5c48e6ab8a"},
+]
+
+[package.dependencies]
+reflex-base = ">=0.9.0"
+reflex-components-lucide = ">=0.9.0"
 
 [[package]]
 name = "reflex-hosting-cli"
-version = "0.1.60"
+version = "0.1.71"
 description = "Reflex Hosting CLI"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "reflex_hosting_cli-0.1.60-py3-none-any.whl", hash = "sha256:26b340ea1cc4ee007c21d1ef7df200265f7e1d4551a826825f1f76ac04fe0c29"},
-    {file = "reflex_hosting_cli-0.1.60.tar.gz", hash = "sha256:cabb03e5a5e034393c9c3ce12088fadafc49ad933efe1555bb9cb93afd9a819f"},
+    {file = "reflex_hosting_cli-0.1.71-py3-none-any.whl", hash = "sha256:858efe6fb22aaede8030ef2e175eda743851d762734a1de5fc7d9c8a8c371085"},
+    {file = "reflex_hosting_cli-0.1.71.tar.gz", hash = "sha256:e69a282d3c2237872e7b6d1d7b5bb343420fcd730427867b839ffb7b2973eb76"},
 ]
 
 [package.dependencies]
@@ -2007,7 +2244,7 @@ click = ">=8.2"
 httpx = ">=0.25.1,<1.0"
 packaging = ">=24.2"
 platformdirs = ">=3.10.0,<5.0"
-rich = ">=13,<15"
+rich = ">=13,<16"
 
 [[package]]
 name = "requests"
@@ -2190,14 +2427,14 @@ SQLAlchemy = ">=2.0.14,<2.1.0"
 
 [[package]]
 name = "starlette"
-version = "0.50.0"
+version = "1.6.0"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "starlette-0.50.0-py3-none-any.whl", hash = "sha256:9e5391843ec9b6e472eed1365a78c8098cfceb7a74bfd4d6b1c0c0095efb3bca"},
-    {file = "starlette-0.50.0.tar.gz", hash = "sha256:a2a17b22203254bcbc2e1f926d2d55f3f9497f769416b3190768befe598fa3ca"},
+    {file = "starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c"},
+    {file = "starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b"},
 ]
 
 [package.dependencies]
@@ -2205,7 +2442,7 @@ anyio = ">=3.6.2,<5"
 typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""}
 
 [package.extras]
-full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
+full = ["httpx (>=0.27.0,<0.29.0)", "httpx2 (>=2.0.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
 
 [[package]]
 name = "typing-extensions"
@@ -2681,4 +2918,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "0ef7bed7a45f67d409e3bcda9e27ba14a90e0d5cc6c7594c5a559ce2b487dad1"
+content-hash = "6f85a0c969ff3f08928449a820104511959859363180e43a3c3a46bbb33d6dd0"
